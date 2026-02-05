@@ -105,9 +105,9 @@ export default function Index() {
         <div className="container py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-6">
-              <span className="text-xl font-bold text-primary">Kastia365</span>
+              <span className="text-xl font-bold text-primary">k365</span>
               <span className="text-sm text-muted-foreground">
-                © 2025 Kastia365. All rights reserved.
+                © 2025 k365. All rights reserved.
               </span>
             </div>
             <nav className="flex items-center gap-6 text-sm text-muted-foreground">
