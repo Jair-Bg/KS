@@ -32,7 +32,7 @@ export function Header() {
           {/* Logo */}
           <div className="flex items-center gap-8">
             <a href="/" className="text-2xl font-bold text-primary">
-              k365
+              K365
             </a>
             
             {/* Main Links */}
