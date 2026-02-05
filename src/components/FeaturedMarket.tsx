@@ -15,7 +15,7 @@ export function FeaturedMarket() {
     <div className="market-card animate-fade-in">
       <div className="flex items-start justify-between mb-4">
         <h2 className="text-lg font-semibold">Championship: Seattle vs New England</h2>
-        <span className="text-primary font-bold text-xl">K365</span>
+        <span className="text-primary font-bold text-xl">Kastia</span>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
