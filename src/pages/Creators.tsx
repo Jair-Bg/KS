@@ -2,7 +2,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Users, DollarSign, Star, ExternalLink, BarChart3, ArrowRight, Code2, Tv } from "lucide-react";
-import { EmbedWidget } from "@/components/EmbedWidget";
+
 
 const featuredCreators = [
   {
