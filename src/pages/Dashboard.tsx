@@ -3,7 +3,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { DollarSign, Eye, BarChart3, TrendingUp, Copy, ExternalLink, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchCreatorStats, fetchCreatorMarkets, type Market, type CreatorStats } from "@/lib/api";
+import { fetchCreatorStats, fetchCreatorMarkets, formatVolume, type Market, type CreatorStats } from "@/lib/api";
 
 export default function Dashboard() {
   const [stats, setStats] = useState<CreatorStats | null>(null);
@@ -13,16 +13,22 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function load() {
-      const [s, m] = await Promise.all([fetchCreatorStats(), fetchCreatorMarkets()]);
-      setStats(s);
-      setMarkets(m);
-      setLoading(false);
+      try {
+        const [s, m] = await Promise.all([fetchCreatorStats(), fetchCreatorMarkets()]);
+        setStats(s);
+        setMarkets(m);
+      } catch (e) {
+        console.error("Failed to load dashboard:", e);
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, []);
 
   const handleCopyEmbed = (marketId: string) => {
-    const code = `<iframe src="https://kastia.app/embed/${marketId}" width="100%" height="200" frameborder="0"></iframe>`;
+    const baseUrl = window.location.origin;
+    const code = `<iframe src="${baseUrl}/embed/${marketId}" width="100%" height="200" frameborder="0" style="border:none;border-radius:12px;"></iframe>`;
     navigator.clipboard.writeText(code);
     setCopiedId(marketId);
     setTimeout(() => setCopiedId(null), 2000);
@@ -32,7 +38,7 @@ export default function Dashboard() {
     { label: "Total Earnings", value: stats.totalEarnings, icon: DollarSign, change: "+12.4%" },
     { label: "Total Volume", value: stats.totalVolume, icon: BarChart3, change: "+28.7%" },
     { label: "Embed Views", value: stats.embedViews, icon: Eye, change: "+8.1%" },
-    { label: "Active Markets", value: String(stats.activeMarkets), icon: TrendingUp, change: `+${stats.activeMarkets}` },
+    { label: "Active Markets", value: String(stats.activeMarkets), icon: TrendingUp, change: `${stats.activeMarkets}` },
   ] : [];
 
   if (loading) {
@@ -80,46 +86,55 @@ export default function Dashboard() {
           <div className="px-6 py-4 border-b border-border">
             <h2 className="font-semibold text-foreground">Your Markets</h2>
           </div>
-          <div className="divide-y divide-border">
-            {markets.map((market) => (
-              <div key={market.id} className="px-6 py-4 hover:bg-secondary/50 transition-colors">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`w-2 h-2 rounded-full ${market.status === "active" ? "bg-success" : "bg-muted-foreground"}`} />
-                      <span className="font-medium text-foreground text-sm truncate">{market.question}</span>
+          {markets.length === 0 ? (
+            <div className="px-6 py-12 text-center">
+              <p className="text-muted-foreground mb-4">You haven't created any markets yet.</p>
+              <Button variant="signup" size="pill" asChild>
+                <a href="/create">Create Your First Market</a>
+              </Button>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {markets.map((market) => (
+                <div key={market.id} className="px-6 py-4 hover:bg-secondary/50 transition-colors">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`w-2 h-2 rounded-full ${market.status === "active" ? "bg-success" : "bg-muted-foreground"}`} />
+                        <span className="font-medium text-foreground text-sm truncate">{market.question}</span>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span className="capitalize">{market.category}</span>
+                        <span>Yes: {Math.round(market.yes_odds)}%</span>
+                        <span>{(market.embed_views || 0).toLocaleString()} embed views</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span className="capitalize">{market.category}</span>
-                      <span>Yes: {market.options[0]?.odds}%</span>
-                      <span>{market.embedViews.toLocaleString()} embed views</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-6 shrink-0">
-                    <div className="text-right">
-                      <div className="text-sm font-semibold text-foreground">{market.volume}</div>
-                      <div className="text-xs text-muted-foreground">volume</div>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleCopyEmbed(market.id)}
-                      >
-                        {copiedId === market.id ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                        <a href={`/embed/${market.id}`} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      </Button>
+                    <div className="flex items-center gap-6 shrink-0">
+                      <div className="text-right">
+                        <div className="text-sm font-semibold text-foreground">{formatVolume(market.volume)}</div>
+                        <div className="text-xs text-muted-foreground">volume</div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleCopyEmbed(market.id)}
+                        >
+                          {copiedId === market.id ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                          <a href={`/embed/${market.id}`} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </main>
       <Footer />

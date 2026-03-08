@@ -11,9 +11,8 @@ type Step = "input" | "refine" | "embed";
 
 interface MarketDraft {
   question: string;
-  type: "binary" | "multi";
-  resolutionDate: string;
-  options: string[];
+  market_type: "binary" | "multi";
+  end_date: string;
   category: string;
 }
 
@@ -24,16 +23,15 @@ export default function CreateMarket() {
   const [publishedMarket, setPublishedMarket] = useState<Market | null>(null);
   const [copied, setCopied] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [error, setError] = useState("");
 
   const handleGenerate = () => {
-    // Simulated AI market generation
     const question = input.includes("?") ? input : `Will ${input}?`;
     const category = detectCategory(input);
     setDraft({
       question,
-      type: "binary",
-      resolutionDate: "2025-06-30",
-      options: ["Yes", "No"],
+      market_type: "binary",
+      end_date: "2025-12-31",
       category,
     });
     setStep("refine");
@@ -51,25 +49,26 @@ export default function CreateMarket() {
   const handlePublish = async () => {
     if (!draft) return;
     setPublishing(true);
+    setError("");
     try {
       const market = await createMarket({
         question: draft.question,
-        type: draft.type,
-        resolutionDate: draft.resolutionDate,
-        options: draft.options,
         category: draft.category,
+        market_type: draft.market_type,
+        end_date: new Date(draft.end_date).toISOString(),
       });
       setPublishedMarket(market);
       setStep("embed");
-    } catch {
-      // Handle error
+    } catch (e: any) {
+      setError(e.message || "Failed to create market");
     } finally {
       setPublishing(false);
     }
   };
 
-  const embedId = publishedMarket?.id || "abc123";
-  const embedCode = `<iframe src="https://kastia.app/embed/${embedId}" width="100%" height="200" frameborder="0"></iframe>`;
+  const embedId = publishedMarket?.id || "preview";
+  const baseUrl = window.location.origin;
+  const embedCode = `<iframe src="${baseUrl}/embed/${embedId}" width="100%" height="200" frameborder="0" style="border:none;border-radius:12px;"></iframe>`;
 
   const handleCopyEmbed = () => {
     navigator.clipboard.writeText(embedCode);
@@ -167,16 +166,16 @@ export default function CreateMarket() {
                     <label className="text-sm font-medium text-foreground mb-1.5 block">Market type</label>
                     <div className="flex gap-2">
                       <Button
-                        variant={draft.type === "binary" ? "oddsActive" : "odds"}
+                        variant={draft.market_type === "binary" ? "oddsActive" : "odds"}
                         size="pill"
-                        onClick={() => setDraft({ ...draft, type: "binary", options: ["Yes", "No"] })}
+                        onClick={() => setDraft({ ...draft, market_type: "binary" })}
                       >
                         Yes / No
                       </Button>
                       <Button
-                        variant={draft.type === "multi" ? "oddsActive" : "odds"}
+                        variant={draft.market_type === "multi" ? "oddsActive" : "odds"}
                         size="pill"
-                        onClick={() => setDraft({ ...draft, type: "multi", options: ["Option A", "Option B", "Option C"] })}
+                        onClick={() => setDraft({ ...draft, market_type: "multi" })}
                       >
                         Multi
                       </Button>
@@ -186,8 +185,8 @@ export default function CreateMarket() {
                     <label className="text-sm font-medium text-foreground mb-1.5 block">Resolution date</label>
                     <Input
                       type="date"
-                      value={draft.resolutionDate}
-                      onChange={(e) => setDraft({ ...draft, resolutionDate: e.target.value })}
+                      value={draft.end_date}
+                      onChange={(e) => setDraft({ ...draft, end_date: e.target.value })}
                       className="bg-secondary border-0 rounded-lg"
                     />
                   </div>
@@ -222,6 +221,8 @@ export default function CreateMarket() {
                 />
               </div>
 
+              {error && <p className="text-sm text-destructive text-center">{error}</p>}
+
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setStep("input")}>
                   Back
@@ -244,7 +245,7 @@ export default function CreateMarket() {
           )}
 
           {/* Step 3: Embed */}
-          {step === "embed" && (draft || publishedMarket) && (
+          {step === "embed" && publishedMarket && (
             <div className="space-y-6 animate-fade-in">
               <div className="text-center mb-8">
                 <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-4">
@@ -255,10 +256,10 @@ export default function CreateMarket() {
               </div>
 
               <EmbedWidget
-                marketId={embedId}
-                question={publishedMarket?.question || draft?.question || ""}
-                yesOdds={50}
-                noOdds={50}
+                marketId={publishedMarket.id}
+                question={publishedMarket.question}
+                yesOdds={Math.round(publishedMarket.yes_odds)}
+                noOdds={Math.round(publishedMarket.no_odds)}
                 volume="$0"
               />
 
