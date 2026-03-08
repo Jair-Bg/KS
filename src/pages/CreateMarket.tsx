@@ -3,7 +3,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { EmbedWidget } from "@/components/EmbedWidget";
+
 import { Sparkles, Link2, Copy, Check, ArrowRight, Loader2, Plus, X } from "lucide-react";
 import { createMarket, type Market } from "@/lib/api";
 
