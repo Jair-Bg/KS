@@ -58,10 +58,10 @@ export function EmbedShowcase() {
             </div>
             <EmbedWidget
               marketId="abc123"
-              question="Bitcoin above $120k by June 2025?"
-              yesOdds={34}
-              noOdds={66}
-              volume="$2.4M"
+              question="'Cursor for Hardware' startup raises $50M+ by end of 2026?"
+              yesOdds={41}
+              noOdds={59}
+              volume="$320K"
               compact
             />
             <p className="text-sm text-muted-foreground">Put your prediction where your mouth is 👆</p>
