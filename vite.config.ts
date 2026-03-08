@@ -18,4 +18,12 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    include: [
+      "wagmi",
+      "viem",
+      "@rainbow-me/rainbowkit",
+      "@tanstack/react-query",
+    ],
+  },
 }));
