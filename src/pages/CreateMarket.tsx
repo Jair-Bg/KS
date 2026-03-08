@@ -279,12 +279,13 @@ export default function CreateMarket() {
               <div>
                 <label className="text-sm font-medium text-muted-foreground mb-2 block">Preview</label>
                 {draft.market_type === "binary" ? (
-                  <EmbedWidget
-                    question={draft.question}
-                    yesOdds={50}
-                    noOdds={50}
-                    volume="$0"
-                  />
+                  <div className="rounded-xl border border-primary/20 bg-card p-4">
+                    <p className="font-semibold text-foreground text-sm mb-3">{draft.question}</p>
+                    <div className="flex gap-2">
+                      <div className="flex-1 text-center text-sm py-1.5 rounded-full bg-primary/10 text-primary font-medium">Yes 50%</div>
+                      <div className="flex-1 text-center text-sm py-1.5 rounded-full bg-muted text-muted-foreground font-medium">No 50%</div>
+                    </div>
+                  </div>
                 ) : (
                   <div className="rounded-xl border border-primary/20 bg-card p-4">
                     <p className="font-semibold text-foreground text-sm mb-3">{draft.question}</p>
