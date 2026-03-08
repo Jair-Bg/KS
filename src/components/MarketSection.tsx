@@ -4,6 +4,7 @@ import { MarketCard } from "./MarketCard";
 interface MarketSectionProps {
   title: string;
   markets: {
+    id?: string;
     title: string;
     subtitle?: string;
     options: { name: string; payout: string; odds: number; icon?: string }[];
@@ -21,7 +22,7 @@ export function MarketSection({ title, markets }: MarketSectionProps) {
       </div>
       <div className="grid md:grid-cols-2 gap-4">
         {markets.map((market, index) => (
-          <MarketCard key={index} {...market} />
+          <MarketCard key={market.id || index} {...market} />
         ))}
       </div>
     </section>
