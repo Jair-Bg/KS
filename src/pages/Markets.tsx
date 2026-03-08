@@ -4,7 +4,7 @@ import { Footer } from "@/components/Footer";
 import { MarketSection } from "@/components/MarketSection";
 import { TrendingSidebar } from "@/components/TrendingSidebar";
 
-const allMarkets: Record<string, { title: string; markets: { title: string; subtitle?: string; options: { name: string; payout: string; odds: number; icon?: string }[]; volume?: string; marketsCount?: number }[] }[]> = {
+const allMarkets: Record<string, { title: string; markets: { id?: string; title: string; subtitle?: string; options: { name: string; payout: string; odds: number; icon?: string }[]; volume?: string; marketsCount?: number }[] }[]> = {
   trending: [
     {
       title: "Pro Football",
