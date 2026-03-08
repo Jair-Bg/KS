@@ -107,7 +107,7 @@ export async function fetchMarkets(category?: string, search?: string): Promise<
     .from("markets")
     .select("*")
     .eq("status", "active")
-    .order("created_at", { ascending: false })
+    .order("volume", { ascending: false })
     .limit(50);
 
   if (category && category !== "trending") {
@@ -117,9 +117,32 @@ export async function fetchMarkets(category?: string, search?: string): Promise<
     query = query.ilike("question", `%${search}%`);
   }
 
-  const { data, error } = await query;
+  const { data: markets, error } = await query;
   if (error) throw error;
-  return (data as Market[]) || [];
+  
+  // Fetch options for multi-outcome markets
+  const marketIds = (markets || []).filter((m: any) => m.market_type === "multi").map((m: any) => m.id);
+  let optionsMap: Record<string, MarketOptionRow[]> = {};
+  
+  if (marketIds.length > 0) {
+    const { data: allOptions } = await supabase
+      .from("market_options")
+      .select("*")
+      .in("market_id", marketIds)
+      .order("sort_order");
+    
+    if (allOptions) {
+      for (const opt of allOptions as MarketOptionRow[]) {
+        if (!optionsMap[opt.market_id]) optionsMap[opt.market_id] = [];
+        optionsMap[opt.market_id].push(opt);
+      }
+    }
+  }
+
+  return (markets || []).map((m: any) => ({
+    ...m,
+    options: optionsMap[m.id] || [],
+  })) as Market[];
 }
 
 export async function fetchMarket(id: string): Promise<Market | null> {
