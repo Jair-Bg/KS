@@ -1,9 +1,11 @@
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
 const categories = [
-  { id: "trending", label: "Trending", active: true },
+  { id: "trending", label: "Trending" },
   { id: "politics", label: "Politics" },
   { id: "sports", label: "Sports" },
   { id: "culture", label: "Culture" },
@@ -15,7 +17,36 @@ const categories = [
   { id: "tech", label: "Tech & Science" },
 ];
 
-export function Header() {
+const navLinks = [
+  { href: "/markets", label: "MARKETS" },
+  { href: "/create", label: "CREATE" },
+  { href: "/creators", label: "CREATORS" },
+  { href: "/dashboard", label: "DASHBOARD" },
+];
+
+interface HeaderProps {
+  activeCategory?: string;
+  onCategoryChange?: (category: string) => void;
+}
+
+export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
+  const [localCategory, setLocalCategory] = useState("trending");
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const currentCategory = activeCategory ?? localCategory;
+  const handleCategoryClick = (id: string) => {
+    if (onCategoryChange) {
+      onCategoryChange(id);
+    } else {
+      setLocalCategory(id);
+    }
+    // Navigate to markets page if not already there
+    if (location.pathname !== "/markets") {
+      navigate("/markets");
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border">
       {/* Announcement Bar */}
@@ -37,10 +68,26 @@ export function Header() {
             
             {/* Main Links */}
             <nav className="hidden md:flex items-center gap-6">
-              <a href="/markets" className="nav-link nav-link-active font-semibold">MARKETS</a>
-              <a href="/create" className="text-sm font-medium text-primary">CREATE</a>
-              <a href="/creators" className="nav-link">CREATORS</a>
-              <a href="/dashboard" className="nav-link">DASHBOARD</a>
+              {navLinks.map((link) => {
+                const isActive = location.pathname === link.href;
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(link.href);
+                    }}
+                    className={`text-sm font-medium transition-colors duration-200 ${
+                      isActive
+                        ? "text-foreground font-semibold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {link.label}
+                  </a>
+                );
+              })}
             </nav>
           </div>
 
@@ -64,7 +111,8 @@ export function Header() {
           {categories.map((cat) => (
             <button
               key={cat.id}
-              className={`category-pill whitespace-nowrap ${cat.active ? 'category-pill-active' : ''}`}
+              onClick={() => handleCategoryClick(cat.id)}
+              className={`category-pill whitespace-nowrap ${currentCategory === cat.id ? 'category-pill-active' : ''}`}
             >
               {cat.label}
             </button>
