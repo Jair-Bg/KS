@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { X, Loader2, CheckCircle2 } from "lucide-react";
-import { placeBet } from "@/lib/api";
-import { useWallet } from "@/hooks/useWallet";
+import { X, Loader2, CheckCircle2, ExternalLink } from "lucide-react";
+import { useAccount } from "wagmi";
+import { useUSDCBalance, useUSDCAllowance, useApproveUSDC, usePlaceBetOnchain } from "@/hooks/useOnchainBet";
+import { USDC_DECIMALS } from "@/lib/wagmi";
+import { parseUnits } from "viem";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 interface BetModalProps {
   open: boolean;
@@ -13,40 +16,47 @@ interface BetModalProps {
   option: string;
   odds: number;
   payout: string;
+  onchainMarketId?: bigint;
+  optionIndex?: bigint;
 }
 
-export function BetModal({ open, onClose, marketId, question, option, odds, payout }: BetModalProps) {
+export function BetModal({ open, onClose, marketId, question, option, odds, payout, onchainMarketId, optionIndex }: BetModalProps) {
   const [amount, setAmount] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ bet_id: string; odds: number; payout: number } | null>(null);
-  const [error, setError] = useState("");
-  const { connected, balance, connect, isConnecting, refreshBalance } = useWallet();
+  const { address, isConnected } = useAccount();
+  const { balance, refetch: refetchBalance } = useUSDCBalance();
+  const { allowance, refetch: refetchAllowance } = useUSDCAllowance();
+  const { approve, isPending: isApproving, isSuccess: approveSuccess } = useApproveUSDC();
+  const { placeBet, isPending: isBetting, isSuccess: betSuccess, hash: betHash } = usePlaceBetOnchain();
 
   if (!open) return null;
 
   const numAmount = parseFloat(amount) || 0;
   const potentialPayout = numAmount * parseFloat(payout);
+  const amountInUnits = parseUnits((numAmount || 0).toString(), USDC_DECIMALS);
+  const needsApproval = allowance < amountInUnits && numAmount > 0;
 
-  const handleBet = async () => {
-    setError("");
-    setLoading(true);
-    try {
-      const betResult = await placeBet({ marketId, option, amount: numAmount });
-      setResult(betResult);
-      refreshBalance();
-    } catch (e: any) {
-      setError(e.message || "Bet failed");
-    } finally {
-      setLoading(false);
+  const handleApprove = () => {
+    approve(numAmount);
+  };
+
+  const handleBet = () => {
+    if (onchainMarketId !== undefined && optionIndex !== undefined) {
+      placeBet(onchainMarketId, optionIndex, numAmount);
     }
   };
 
   const handleClose = () => {
     setAmount("");
-    setResult(null);
-    setError("");
     onClose();
   };
+
+  // Refetch after success
+  if (approveSuccess) {
+    refetchAllowance();
+  }
+  if (betSuccess) {
+    refetchBalance();
+  }
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
@@ -54,7 +64,7 @@ export function BetModal({ open, onClose, marketId, question, option, odds, payo
       <div className="relative bg-card border border-border rounded-2xl shadow-2xl w-full max-w-md mx-4 animate-fade-in overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h3 className="font-semibold text-foreground">Place Prediction</h3>
+          <h3 className="font-semibold text-foreground">Place Onchain Bet</h3>
           <button onClick={handleClose} className="text-muted-foreground hover:text-foreground transition-colors">
             <X className="w-5 h-5" />
           </button>
@@ -62,51 +72,49 @@ export function BetModal({ open, onClose, marketId, question, option, odds, payo
 
         <div className="p-5 space-y-5">
           {/* Success state */}
-          {result ? (
+          {betSuccess ? (
             <div className="text-center space-y-4 py-4">
               <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-8 h-8 text-success" />
               </div>
               <div>
-                <h4 className="text-lg font-bold text-foreground">Bet Placed! 🎉</h4>
+                <h4 className="text-lg font-bold text-foreground">Bet Confirmed Onchain! 🎉</h4>
                 <p className="text-sm text-muted-foreground mt-1">
-                  ${numAmount.toFixed(2)} on <span className="font-semibold text-foreground">{option}</span> at {result.odds}%
+                  ${numAmount.toFixed(2)} USDC on <span className="font-semibold text-foreground">{option}</span> at {odds}%
                 </p>
                 <p className="text-sm text-success font-semibold mt-1">
-                  Potential payout: ${result.payout}
+                  Potential payout: ${potentialPayout.toFixed(2)} USDC
                 </p>
               </div>
+              {betHash && (
+                <a
+                  href={`https://sepolia.basescan.org/tx/${betHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                >
+                  View on BaseScan <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
               <Button variant="signup" className="w-full rounded-xl" onClick={handleClose}>
                 Done
               </Button>
             </div>
-          ) : !connected ? (
-            /* Connect / sign in state */
+          ) : !isConnected ? (
+            /* Connect wallet state */
             <div className="text-center space-y-4 py-4">
               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-                <span className="text-2xl">🔑</span>
+                <span className="text-2xl">🔗</span>
               </div>
               <div>
-                <h4 className="font-semibold text-foreground">Sign In to Trade</h4>
+                <h4 className="font-semibold text-foreground">Connect Wallet to Trade</h4>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Sign in to place predictions and earn payouts.
+                  Connect your wallet on Base Sepolia to place onchain bets with USDC.
                 </p>
               </div>
-              <Button
-                variant="signup"
-                className="w-full rounded-xl h-12"
-                onClick={connect}
-                disabled={isConnecting}
-              >
-                {isConnecting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Connecting...
-                  </>
-                ) : (
-                  "Sign In"
-                )}
-              </Button>
+              <div className="flex justify-center">
+                <ConnectButton />
+              </div>
             </div>
           ) : (
             /* Bet form */
@@ -177,28 +185,45 @@ export function BetModal({ open, onClose, marketId, question, option, odds, payo
                 </div>
               )}
 
-              {error && (
-                <p className="text-sm text-destructive text-center">{error}</p>
+              {/* Approve + Bet flow */}
+              {needsApproval ? (
+                <Button
+                  variant="signup"
+                  className="w-full rounded-xl h-12 text-base"
+                  onClick={handleApprove}
+                  disabled={isApproving || numAmount <= 0}
+                >
+                  {isApproving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Approving USDC...
+                    </>
+                  ) : (
+                    `Approve ${numAmount.toFixed(2)} USDC`
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  variant="signup"
+                  className="w-full rounded-xl h-12 text-base"
+                  onClick={handleBet}
+                  disabled={isBetting || numAmount <= 0 || numAmount > balance || onchainMarketId === undefined}
+                >
+                  {isBetting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Confirming onchain...
+                    </>
+                  ) : onchainMarketId === undefined ? (
+                    "No onchain market linked"
+                  ) : (
+                    `Place $${numAmount.toFixed(2)} on ${option}`
+                  )}
+                </Button>
               )}
 
-              <Button
-                variant="signup"
-                className="w-full rounded-xl h-12 text-base"
-                onClick={handleBet}
-                disabled={loading || numAmount <= 0 || numAmount > balance}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Placing bet...
-                  </>
-                ) : (
-                  `Place $${numAmount.toFixed(2)} on ${option}`
-                )}
-              </Button>
-
               <p className="text-[11px] text-center text-muted-foreground">
-                Settlement on Base (L2) · USDC payouts
+                Base Sepolia · USDC · Onchain settlement
               </p>
             </>
           )}
