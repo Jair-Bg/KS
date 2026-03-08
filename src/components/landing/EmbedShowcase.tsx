@@ -27,6 +27,7 @@ export function EmbedShowcase() {
               Bitcoin's been consolidating for weeks. The ETF flows are telling a story most people aren't reading. Here's my take on what happens next 👇
             </p>
             <EmbedWidget
+              marketId="abc123"
               question="Bitcoin above $120k by June 2025?"
               yesOdds={34}
               noOdds={66}
@@ -44,6 +45,7 @@ export function EmbedShowcase() {
             <div className="text-sm font-semibold text-foreground">Will Kenya's Gen-Z movement reshape 2027 elections?</div>
             <div className="text-xs text-muted-foreground">234K views · 1 day ago</div>
             <EmbedWidget
+              marketId="def456"
               question="Kenya opposition wins 2027 presidential election?"
               yesOdds={42}
               noOdds={58}

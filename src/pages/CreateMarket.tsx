@@ -4,7 +4,8 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmbedWidget } from "@/components/EmbedWidget";
-import { Sparkles, Link2, Copy, Check, ArrowRight } from "lucide-react";
+import { Sparkles, Link2, Copy, Check, ArrowRight, Loader2 } from "lucide-react";
+import { createMarket, type Market } from "@/lib/api";
 
 type Step = "input" | "refine" | "embed";
 
@@ -13,31 +14,64 @@ interface MarketDraft {
   type: "binary" | "multi";
   resolutionDate: string;
   options: string[];
+  category: string;
 }
 
 export default function CreateMarket() {
   const [step, setStep] = useState<Step>("input");
   const [input, setInput] = useState("");
   const [draft, setDraft] = useState<MarketDraft | null>(null);
+  const [publishedMarket, setPublishedMarket] = useState<Market | null>(null);
   const [copied, setCopied] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   const handleGenerate = () => {
     // Simulated AI market generation
+    const question = input.includes("?") ? input : `Will ${input}?`;
+    const category = detectCategory(input);
     setDraft({
-      question: input.includes("?") ? input : `Will ${input}?`,
+      question,
       type: "binary",
       resolutionDate: "2025-06-30",
       options: ["Yes", "No"],
+      category,
     });
     setStep("refine");
   };
 
-  const handlePublish = () => {
-    setStep("embed");
+  const detectCategory = (text: string): string => {
+    const lower = text.toLowerCase();
+    if (lower.includes("bitcoin") || lower.includes("crypto") || lower.includes("eth")) return "crypto";
+    if (lower.includes("election") || lower.includes("trump") || lower.includes("president")) return "politics";
+    if (lower.includes("game") || lower.includes("match") || lower.includes("cup")) return "sports";
+    if (lower.includes("gpt") || lower.includes("ai") || lower.includes("spacex")) return "tech";
+    return "trending";
   };
 
+  const handlePublish = async () => {
+    if (!draft) return;
+    setPublishing(true);
+    try {
+      const market = await createMarket({
+        question: draft.question,
+        type: draft.type,
+        resolutionDate: draft.resolutionDate,
+        options: draft.options,
+        category: draft.category,
+      });
+      setPublishedMarket(market);
+      setStep("embed");
+    } catch {
+      // Handle error
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const embedId = publishedMarket?.id || "abc123";
+  const embedCode = `<iframe src="https://kastia.app/embed/${embedId}" width="100%" height="200" frameborder="0"></iframe>`;
+
   const handleCopyEmbed = () => {
-    const embedCode = `<iframe src="https://kastia.app/embed/abc123" width="100%" height="200" frameborder="0"></iframe>`;
     navigator.clipboard.writeText(embedCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -79,6 +113,7 @@ export default function CreateMarket() {
                 <Input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && input.trim() && handleGenerate()}
                   placeholder="e.g., Will Bitcoin hit $150k by December?"
                   className="pl-12 h-14 text-base rounded-xl bg-secondary border-0 focus-visible:ring-2"
                 />
@@ -157,6 +192,23 @@ export default function CreateMarket() {
                     />
                   </div>
                 </div>
+
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">Category</label>
+                  <div className="flex flex-wrap gap-2">
+                    {["trending", "politics", "sports", "crypto", "tech", "culture", "economics"].map((cat) => (
+                      <Button
+                        key={cat}
+                        variant={draft.category === cat ? "oddsActive" : "odds"}
+                        size="pill"
+                        onClick={() => setDraft({ ...draft, category: cat })}
+                        className="capitalize"
+                      >
+                        {cat}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Preview */}
@@ -174,16 +226,25 @@ export default function CreateMarket() {
                 <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setStep("input")}>
                   Back
                 </Button>
-                <Button variant="signup" className="flex-1 rounded-xl" onClick={handlePublish}>
-                  Publish Market
-                  <ArrowRight className="w-4 h-4 ml-1" />
+                <Button variant="signup" className="flex-1 rounded-xl" onClick={handlePublish} disabled={publishing}>
+                  {publishing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                      Publishing...
+                    </>
+                  ) : (
+                    <>
+                      Publish Market
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
           )}
 
           {/* Step 3: Embed */}
-          {step === "embed" && draft && (
+          {step === "embed" && (draft || publishedMarket) && (
             <div className="space-y-6 animate-fade-in">
               <div className="text-center mb-8">
                 <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-4">
@@ -194,7 +255,8 @@ export default function CreateMarket() {
               </div>
 
               <EmbedWidget
-                question={draft.question}
+                marketId={embedId}
+                question={publishedMarket?.question || draft?.question || ""}
                 yesOdds={50}
                 noOdds={50}
                 volume="$0"
@@ -203,7 +265,7 @@ export default function CreateMarket() {
               <div className="bg-card rounded-xl border border-border p-6 space-y-4">
                 <label className="text-sm font-medium text-foreground block">Embed code</label>
                 <div className="bg-secondary rounded-lg p-4 font-mono text-xs text-muted-foreground break-all">
-                  {`<iframe src="https://kastia.app/embed/abc123" width="100%" height="200" frameborder="0"></iframe>`}
+                  {embedCode}
                 </div>
                 <Button variant="outline" className="w-full rounded-xl" onClick={handleCopyEmbed}>
                   {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
@@ -212,7 +274,7 @@ export default function CreateMarket() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="rounded-xl" onClick={() => { setStep("input"); setInput(""); setDraft(null); }}>
+                <Button variant="outline" className="rounded-xl" onClick={() => { setStep("input"); setInput(""); setDraft(null); setPublishedMarket(null); }}>
                   Create Another
                 </Button>
                 <Button variant="signup" className="rounded-xl" asChild>

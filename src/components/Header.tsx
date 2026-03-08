@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { WalletButton } from "./WalletButton";
+import { searchMarkets, type Market } from "@/lib/api";
 
 const categories = [
   { id: "trending", label: "Trending" },
@@ -22,6 +24,7 @@ const navLinks = [
   { href: "/create", label: "CREATE" },
   { href: "/creators", label: "CREATORS" },
   { href: "/dashboard", label: "DASHBOARD" },
+  { href: "/embeds", label: "EMBEDS" },
 ];
 
 interface HeaderProps {
@@ -31,6 +34,9 @@ interface HeaderProps {
 
 export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
   const [localCategory, setLocalCategory] = useState("trending");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Market[]>([]);
+  const [showSearch, setShowSearch] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -41,7 +47,30 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
     } else {
       setLocalCategory(id);
     }
-    // Navigate to markets page if not already there
+    if (location.pathname !== "/markets") {
+      navigate("/markets");
+    }
+  };
+
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (query.trim().length > 1) {
+      const results = await searchMarkets(query);
+      setSearchResults(results);
+      setShowSearch(true);
+    } else {
+      setSearchResults([]);
+      setShowSearch(false);
+    }
+  };
+
+  const handleSearchSelect = (market: Market) => {
+    setShowSearch(false);
+    setSearchQuery("");
+    // Navigate to markets with the relevant category
+    if (onCategoryChange) {
+      onCategoryChange(market.category);
+    }
     if (location.pathname !== "/markets") {
       navigate("/markets");
     }
@@ -62,7 +91,7 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
         <div className="flex items-center justify-between gap-8">
           {/* Logo */}
           <div className="flex items-center gap-8">
-            <a href="/" className="text-2xl font-bold text-primary">
+            <a href="/" className="text-2xl font-bold text-primary" onClick={(e) => { e.preventDefault(); navigate("/"); }}>
               Kastia
             </a>
             
@@ -97,12 +126,53 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Trade on anything"
+                placeholder="Search markets..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                onFocus={() => searchResults.length > 0 && setShowSearch(true)}
                 className="w-64 pl-10 bg-secondary border-0 rounded-full focus-visible:ring-1"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => { setSearchQuery(""); setShowSearch(false); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+              
+              {/* Search dropdown */}
+              {showSearch && searchResults.length > 0 && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setShowSearch(false)} />
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl z-40 overflow-hidden">
+                    {searchResults.slice(0, 5).map((m) => (
+                      <button
+                        key={m.id}
+                        onClick={() => handleSearchSelect(m)}
+                        className="w-full text-left px-4 py-3 hover:bg-secondary transition-colors border-b border-border last:border-b-0"
+                      >
+                        <p className="text-sm font-medium text-foreground truncate">{m.question}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                          <span className="capitalize">{m.category}</span>
+                          <span>{m.volume} vol</span>
+                          <span>{m.options[0]?.name}: {m.options[0]?.odds}%</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+              {showSearch && searchResults.length === 0 && searchQuery.length > 1 && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setShowSearch(false)} />
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl z-40 p-4 text-center">
+                    <p className="text-sm text-muted-foreground">No markets found for "{searchQuery}"</p>
+                  </div>
+                </>
+              )}
             </div>
-            <Button variant="login" size="pill">Log in</Button>
-            <Button variant="signup" size="pill">Sign up</Button>
+            <WalletButton />
           </div>
         </div>
 

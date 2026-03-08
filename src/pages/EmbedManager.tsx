@@ -218,6 +218,7 @@ export default function EmbedManager() {
                     </div>
                     {/* Embed widget */}
                     <EmbedWidget
+                      marketId={selectedMarket.id}
                       question={selectedMarket.question}
                       yesOdds={selectedMarket.yesOdds}
                       noOdds={selectedMarket.noOdds}
