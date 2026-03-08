@@ -1,6 +1,7 @@
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { StatsBar } from "@/components/landing/StatsBar";
+import { LiveDemo } from "@/components/landing/LiveDemo";
 import { EmbedShowcase } from "@/components/landing/EmbedShowcase";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { ValueProps } from "@/components/landing/ValueProps";
@@ -14,6 +15,7 @@ export default function Index() {
       <main>
         <HeroSection />
         <StatsBar />
+        <LiveDemo />
         <EmbedShowcase />
         <HowItWorks />
         <ValueProps />
