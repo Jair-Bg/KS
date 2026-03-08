@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "./ui/button";
 
 interface MarketOption {
@@ -16,6 +17,8 @@ interface MarketCardProps {
 }
 
 export function MarketCard({ title, subtitle, options, volume, marketsCount }: MarketCardProps) {
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
   return (
     <div className="market-card animate-fade-in">
       <div className="flex items-start justify-between mb-4">
@@ -43,7 +46,12 @@ export function MarketCard({ title, subtitle, options, volume, marketsCount }: M
             </div>
             <div className="flex items-center gap-3 shrink-0">
               <span className="text-sm text-muted-foreground">{option.payout}</span>
-              <Button variant="odds" size="pill" className="min-w-[60px]">
+              <Button
+                variant={selectedIndex === index ? "oddsActive" : "odds"}
+                size="pill"
+                className="min-w-[60px]"
+                onClick={() => setSelectedIndex(selectedIndex === index ? null : index)}
+              >
                 {option.odds}%
               </Button>
             </div>
