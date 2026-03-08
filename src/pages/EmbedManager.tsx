@@ -216,15 +216,13 @@ export default function EmbedManager() {
                         ● LIVE
                       </div>
                     </div>
-                    {/* Embed widget */}
-                    <EmbedWidget
-                      marketId={selectedMarket.id}
-                      question={selectedMarket.question}
-                      yesOdds={selectedMarket.yesOdds}
-                      noOdds={selectedMarket.noOdds}
-                      volume={selectedMarket.volume}
-                      compact={size === "compact"}
-                    />
+                    <div className="rounded-xl border border-primary/20 bg-card p-3">
+                      <p className={`font-semibold text-foreground mb-2 ${size === "compact" ? "text-xs" : "text-sm"}`}>{selectedMarket.question}</p>
+                      <div className="flex gap-2">
+                        <div className="flex-1 text-center text-xs py-1.5 rounded-full bg-primary/10 text-primary font-medium">Yes {selectedMarket.yesOdds}%</div>
+                        <div className="flex-1 text-center text-xs py-1.5 rounded-full bg-muted text-muted-foreground font-medium">No {selectedMarket.noOdds}%</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
