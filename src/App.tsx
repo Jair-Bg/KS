@@ -7,6 +7,7 @@ import { ThemeProvider } from "./components/ThemeProvider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Markets from "./pages/Markets";
+import MarketDetail from "./pages/MarketDetail";
 import CreateMarket from "./pages/CreateMarket";
 import Dashboard from "./pages/Dashboard";
 import Creators from "./pages/Creators";
