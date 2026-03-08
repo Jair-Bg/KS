@@ -4,7 +4,7 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmbedWidget } from "@/components/EmbedWidget";
-import { Sparkles, Link2, Copy, Check, ArrowRight, Loader2 } from "lucide-react";
+import { Sparkles, Link2, Copy, Check, ArrowRight, Loader2, Plus, X } from "lucide-react";
 import { createMarket, type Market } from "@/lib/api";
 
 type Step = "input" | "refine" | "embed";
@@ -14,6 +14,7 @@ interface MarketDraft {
   market_type: "binary" | "multi";
   end_date: string;
   category: string;
+  options: string[];
 }
 
 export default function CreateMarket() {
@@ -33,6 +34,7 @@ export default function CreateMarket() {
       market_type: "binary",
       end_date: "2025-12-31",
       category,
+      options: ["Option A", "Option B", "Option C"],
     });
     setStep("refine");
   };
@@ -56,6 +58,7 @@ export default function CreateMarket() {
         category: draft.category,
         market_type: draft.market_type,
         end_date: new Date(draft.end_date).toISOString(),
+        options: draft.market_type === "multi" ? draft.options.filter((o) => o.trim()) : undefined,
       });
       setPublishedMarket(market);
       setStep("embed");
@@ -63,6 +66,26 @@ export default function CreateMarket() {
       setError(e.message || "Failed to create market");
     } finally {
       setPublishing(false);
+    }
+  };
+
+  const addOption = () => {
+    if (draft && draft.options.length < 8) {
+      setDraft({ ...draft, options: [...draft.options, ""] });
+    }
+  };
+
+  const removeOption = (index: number) => {
+    if (draft && draft.options.length > 2) {
+      setDraft({ ...draft, options: draft.options.filter((_, i) => i !== index) });
+    }
+  };
+
+  const updateOption = (index: number, value: string) => {
+    if (draft) {
+      const newOptions = [...draft.options];
+      newOptions[index] = value;
+      setDraft({ ...draft, options: newOptions });
     }
   };
 
@@ -113,13 +136,13 @@ export default function CreateMarket() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && input.trim() && handleGenerate()}
-                  placeholder="e.g., Will Bitcoin hit $150k by December?"
+                  placeholder="e.g., Who will win the 2028 presidential election?"
                   className="pl-12 h-14 text-base rounded-xl bg-secondary border-0 focus-visible:ring-2"
                 />
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {["Paste a YouTube link", "Paste a tweet URL", "Type any question"].map((hint) => (
+                {["Yes/No market", "Multi-outcome", "Sports prediction", "Political forecast"].map((hint) => (
                   <button
                     key={hint}
                     className="px-3 py-1.5 text-xs rounded-full bg-secondary text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -192,6 +215,48 @@ export default function CreateMarket() {
                   </div>
                 </div>
 
+                {/* Multi-outcome options editor */}
+                {draft.market_type === "multi" && (
+                  <div>
+                    <label className="text-sm font-medium text-foreground mb-2 block">Outcomes</label>
+                    <div className="space-y-2">
+                      {draft.options.map((opt, i) => (
+                        <div key={i} className="flex gap-2">
+                          <Input
+                            value={opt}
+                            onChange={(e) => updateOption(i, e.target.value)}
+                            placeholder={`Outcome ${i + 1}`}
+                            className="bg-secondary border-0 rounded-lg"
+                          />
+                          {draft.options.length > 2 && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="shrink-0"
+                              onClick={() => removeOption(i)}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    {draft.options.length < 8 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        onClick={addOption}
+                      >
+                        <Plus className="w-4 h-4 mr-1" /> Add outcome
+                      </Button>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Each outcome will start at equal odds (100% ÷ number of outcomes)
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <label className="text-sm font-medium text-foreground mb-1.5 block">Category</label>
                   <div className="flex flex-wrap gap-2">
@@ -213,12 +278,28 @@ export default function CreateMarket() {
               {/* Preview */}
               <div>
                 <label className="text-sm font-medium text-muted-foreground mb-2 block">Preview</label>
-                <EmbedWidget
-                  question={draft.question}
-                  yesOdds={50}
-                  noOdds={50}
-                  volume="$0"
-                />
+                {draft.market_type === "binary" ? (
+                  <EmbedWidget
+                    question={draft.question}
+                    yesOdds={50}
+                    noOdds={50}
+                    volume="$0"
+                  />
+                ) : (
+                  <div className="rounded-xl border border-primary/20 bg-card p-4">
+                    <p className="font-semibold text-foreground text-sm mb-3">{draft.question}</p>
+                    <div className="space-y-2">
+                      {draft.options.filter((o) => o.trim()).map((opt, i) => (
+                        <div key={i} className="flex justify-between items-center text-sm">
+                          <span className="text-foreground">{opt}</span>
+                          <span className="text-muted-foreground">
+                            {(100 / draft.options.filter((o) => o.trim()).length).toFixed(0)}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {error && <p className="text-sm text-destructive text-center">{error}</p>}
@@ -279,7 +360,7 @@ export default function CreateMarket() {
                   Create Another
                 </Button>
                 <Button variant="signup" className="rounded-xl" asChild>
-                  <a href="/dashboard">View Dashboard</a>
+                  <a href={`/market/${publishedMarket.id}`}>View Market</a>
                 </Button>
               </div>
             </div>

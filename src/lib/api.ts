@@ -162,9 +162,14 @@ export async function createMarket(data: {
   category: string;
   market_type?: string;
   end_date: string;
+  options?: string[];
 }): Promise<Market> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error("Not authenticated");
+
+  const isMulti = data.market_type === "multi" && data.options && data.options.length >= 2;
+  const optionCount = isMulti ? data.options!.length : 2;
+  const initialOdds = Math.round(100 / optionCount);
 
   const { data: market, error } = await supabase
     .from("markets")
@@ -175,13 +180,34 @@ export async function createMarket(data: {
       category: data.category,
       market_type: data.market_type || "binary",
       end_date: data.end_date,
-      yes_odds: 50,
-      no_odds: 50,
+      yes_odds: isMulti ? 0 : 50,
+      no_odds: isMulti ? 0 : 50,
     })
     .select()
     .single();
 
   if (error) throw error;
+
+  // Create options for multi-outcome markets
+  if (isMulti && data.options) {
+    const optionsToInsert = data.options.map((name, i) => ({
+      market_id: market.id,
+      name: name.trim(),
+      odds: initialOdds,
+      sort_order: i,
+    }));
+
+    const { error: optError } = await supabase
+      .from("market_options")
+      .insert(optionsToInsert);
+
+    if (optError) {
+      // Rollback: delete the market
+      await supabase.from("markets").delete().eq("id", market.id);
+      throw optError;
+    }
+  }
+
   return market as Market;
 }
 
