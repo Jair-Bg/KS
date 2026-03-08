@@ -4,6 +4,7 @@ import { Search, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { WalletButton } from "./WalletButton";
+import { ThemeToggle } from "./ThemeToggle";
 import { searchMarkets, type Market } from "@/lib/api";
 
 const categories = [
