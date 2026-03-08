@@ -37,9 +37,9 @@ export function Header() {
             
             {/* Main Links */}
             <nav className="hidden md:flex items-center gap-6">
-              <a href="#" className="nav-link nav-link-active font-semibold">MARKETS</a>
-              <a href="#" className="text-sm font-medium text-primary">LIVE</a>
-              <a href="#" className="nav-link">SOCIAL</a>
+              <a href="/markets" className="nav-link nav-link-active font-semibold">MARKETS</a>
+              <a href="/create" className="text-sm font-medium text-primary">CREATE</a>
+              <a href="/dashboard" className="nav-link">DASHBOARD</a>
             </nav>
           </div>
 
