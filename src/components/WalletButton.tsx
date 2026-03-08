@@ -1,33 +1,42 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Wallet, ChevronDown, LogOut, History, Copy, Check } from "lucide-react";
-import { useWallet } from "@/hooks/useWallet";
+import { ChevronDown, LogOut, History, User, Settings } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export function WalletButton() {
-  const { connected, address, balance, isConnecting, connect, disconnect } = useWallet();
+  const { user, loading, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const navigate = useNavigate();
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
+  if (loading) {
+    return <div className="w-24 h-9 rounded-full bg-secondary animate-pulse" />;
+  }
 
-  if (!connected) {
+  if (!user) {
     return (
-      <Button
-        variant="signup"
-        size="pill"
-        onClick={connect}
-        disabled={isConnecting}
-        className="gap-1.5"
-      >
-        <Wallet className="w-3.5 h-3.5" />
-        {isConnecting ? "Connecting..." : "Connect Wallet"}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/auth")}
+          className="text-sm"
+        >
+          Sign In
+        </Button>
+        <Button
+          variant="signup"
+          size="pill"
+          onClick={() => navigate("/auth")}
+        >
+          Sign Up
+        </Button>
+      </div>
     );
   }
+
+  const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "User";
+  const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
     <div className="relative">
@@ -35,10 +44,12 @@ export function WalletButton() {
         variant="odds"
         size="pill"
         onClick={() => setMenuOpen(!menuOpen)}
-        className="gap-1.5"
+        className="gap-2"
       >
-        <span className="w-2 h-2 rounded-full bg-success" />
-        <span className="font-mono text-xs">{address}</span>
+        <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+          {initials}
+        </span>
+        <span className="text-sm max-w-[120px] truncate">{displayName}</span>
         <ChevronDown className="w-3 h-3" />
       </Button>
 
@@ -47,30 +58,37 @@ export function WalletButton() {
           <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
           <div className="absolute right-0 top-full mt-2 w-56 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
             <div className="px-4 py-3 border-b border-border">
-              <p className="text-xs text-muted-foreground">Balance</p>
-              <p className="text-lg font-bold text-foreground">${balance.toFixed(2)} <span className="text-xs text-muted-foreground font-normal">USDC</span></p>
+              <p className="text-sm font-medium text-foreground">{displayName}</p>
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
             </div>
             <div className="py-1">
               <button
-                onClick={handleCopy}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
-              >
-                {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
-                {copied ? "Copied!" : "Copy Address"}
-              </button>
-              <a
-                href="/dashboard"
+                onClick={() => { navigate("/dashboard"); setMenuOpen(false); }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
               >
                 <History className="w-4 h-4" />
                 My Predictions
-              </a>
+              </button>
               <button
-                onClick={() => { disconnect(); setMenuOpen(false); }}
+                onClick={() => { navigate("/creators"); setMenuOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+              >
+                <User className="w-4 h-4" />
+                Creator Dashboard
+              </button>
+              <button
+                onClick={() => { navigate("/embeds"); setMenuOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                Embed Manager
+              </button>
+              <button
+                onClick={async () => { await signOut(); setMenuOpen(false); navigate("/"); }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-destructive hover:bg-secondary transition-colors"
               >
                 <LogOut className="w-4 h-4" />
-                Disconnect
+                Sign Out
               </button>
             </div>
           </div>
