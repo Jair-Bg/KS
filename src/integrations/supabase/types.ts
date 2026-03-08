@@ -22,6 +22,7 @@ export type Database = {
           market_id: string
           odds_at_time: number
           option: string
+          option_id: string | null
           potential_payout: number
           status: string
           user_id: string
@@ -33,6 +34,7 @@ export type Database = {
           market_id: string
           odds_at_time: number
           option: string
+          option_id?: string | null
           potential_payout: number
           status?: string
           user_id: string
@@ -44,6 +46,7 @@ export type Database = {
           market_id?: string
           odds_at_time?: number
           option?: string
+          option_id?: string | null
           potential_payout?: number
           status?: string
           user_id?: string
@@ -51,6 +54,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "bets_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bets_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "market_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      market_options: {
+        Row: {
+          created_at: string
+          id: string
+          market_id: string
+          name: string
+          odds: number
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          market_id: string
+          name: string
+          odds?: number
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          market_id?: string
+          name?: string
+          odds?: number
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_options_market_id_fkey"
             columns: ["market_id"]
             isOneToOne: false
             referencedRelation: "markets"
@@ -114,6 +159,51 @@ export type Database = {
           yes_odds?: number
         }
         Relationships: []
+      }
+      odds_history: {
+        Row: {
+          id: string
+          market_id: string
+          odds: number
+          option_id: string | null
+          option_name: string
+          recorded_at: string
+          volume_at_time: number
+        }
+        Insert: {
+          id?: string
+          market_id: string
+          odds: number
+          option_id?: string | null
+          option_name: string
+          recorded_at?: string
+          volume_at_time?: number
+        }
+        Update: {
+          id?: string
+          market_id?: string
+          odds?: number
+          option_id?: string | null
+          option_name?: string
+          recorded_at?: string
+          volume_at_time?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "odds_history_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "odds_history_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "market_options"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
