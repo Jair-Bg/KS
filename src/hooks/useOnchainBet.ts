@@ -1,5 +1,6 @@
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useAccount } from "wagmi";
 import { parseUnits } from "viem";
+import { baseSepolia } from "wagmi/chains";
 import { PredictionMarketABI, ERC20ABI } from "@/lib/contracts/PredictionMarketABI";
 import { PREDICTION_MARKET_ADDRESS, USDC_ADDRESS, USDC_DECIMALS } from "@/lib/wagmi";
 
@@ -31,12 +32,16 @@ export function useUSDCAllowance() {
 }
 
 export function useApproveUSDC() {
+  const { address } = useAccount();
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const approve = (amount: number) => {
+    if (!address) return;
     const value = parseUnits(amount.toString(), USDC_DECIMALS);
     writeContract({
+      account: address,
+      chain: baseSepolia,
       address: USDC_ADDRESS,
       abi: ERC20ABI,
       functionName: "approve",
@@ -48,12 +53,16 @@ export function useApproveUSDC() {
 }
 
 export function usePlaceBetOnchain() {
+  const { address } = useAccount();
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const placeBet = (marketId: bigint, optionIndex: bigint, amount: number) => {
+    if (!address) return;
     const value = parseUnits(amount.toString(), USDC_DECIMALS);
     writeContract({
+      account: address,
+      chain: baseSepolia,
       address: PREDICTION_MARKET_ADDRESS,
       abi: PredictionMarketABI,
       functionName: "placeBet",
@@ -65,11 +74,15 @@ export function usePlaceBetOnchain() {
 }
 
 export function useCreateMarketOnchain() {
+  const { address } = useAccount();
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const createMarket = (question: string, endTime: bigint, optionCount: bigint) => {
+    if (!address) return;
     writeContract({
+      account: address,
+      chain: baseSepolia,
       address: PREDICTION_MARKET_ADDRESS,
       abi: PredictionMarketABI,
       functionName: "createMarket",
@@ -81,11 +94,15 @@ export function useCreateMarketOnchain() {
 }
 
 export function useResolveMarket() {
+  const { address } = useAccount();
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const resolve = (marketId: bigint, winningOption: bigint) => {
+    if (!address) return;
     writeContract({
+      account: address,
+      chain: baseSepolia,
       address: PREDICTION_MARKET_ADDRESS,
       abi: PredictionMarketABI,
       functionName: "resolveMarket",
@@ -97,11 +114,15 @@ export function useResolveMarket() {
 }
 
 export function useClaimWinnings() {
+  const { address } = useAccount();
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const claim = (marketId: bigint) => {
+    if (!address) return;
     writeContract({
+      account: address,
+      chain: baseSepolia,
       address: PREDICTION_MARKET_ADDRESS,
       abi: PredictionMarketABI,
       functionName: "claim",
