@@ -319,6 +319,7 @@ export default function Creators() {
                   Bitcoin's consolidating hard. ETF flows are telling a story. Here's my prediction 👇
                 </p>
                 <EmbedWidget
+                  marketId="abc123"
                   question="Bitcoin above $120k by June 2025?"
                   yesOdds={34}
                   noOdds={66}
