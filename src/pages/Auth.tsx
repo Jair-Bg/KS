@@ -67,7 +67,7 @@ export default function Auth() {
     setSocialLoading(provider);
     try {
       const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/markets`,
       });
       if (result.error) {
         toast({
