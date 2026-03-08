@@ -1,48 +1,66 @@
 import { Globe, Smartphone, Shield, TrendingUp } from "lucide-react";
+import { motion } from "framer-motion";
 
 const props = [
   {
     icon: Globe,
     title: "Universal embeds",
-    description: "Works in YouTube descriptions, X threads, Substack, Discord, Telegram, WhatsApp rich previews, newsletters, and Twitch overlays.",
+    description: "YouTube, X, Substack, Discord, Telegram, WhatsApp, newsletters, Twitch overlays — works everywhere.",
   },
   {
     icon: Smartphone,
     title: "Mobile-first",
-    description: "Designed for mobile-heavy audiences. Lightweight widgets load fast even on 3G connections across Africa and emerging markets.",
+    description: "Lightweight widgets load fast on 3G. Designed for mobile-heavy audiences across emerging markets.",
   },
   {
     icon: Shield,
     title: "Hybrid settlement",
-    description: "Off-chain for speed and low friction. On-chain settlement on Base (Ethereum L2) with USDC for transparency and composability.",
+    description: "Off-chain for speed. On-chain on Base (Ethereum L2) with USDC for transparency and composability.",
   },
   {
     icon: TrendingUp,
     title: "Contextual liquidity",
-    description: "Markets inherit virality from their host content. No cold-start problem — your audience IS the liquidity.",
+    description: "Markets inherit virality from host content. No cold-start — your audience IS the liquidity.",
   },
 ];
 
 export function ValueProps() {
   return (
-    <section className="py-20 bg-secondary/30">
+    <section className="py-24">
       <div className="container">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <span className="text-xs font-semibold tracking-widest uppercase text-primary mb-4 block">
+            Why Kastia
+          </span>
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
             Built for creators, not traders
           </h2>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-            Kastia is prediction infrastructure embedded into the fabric of online conversation.
+            Prediction infrastructure embedded into the fabric of online conversation.
           </p>
-        </div>
+        </motion.div>
 
         <div className="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {props.map((prop, i) => (
-            <div key={i} className="bg-card rounded-xl border border-border p-6 hover:border-primary/20 hover:shadow-lg transition-all">
-              <prop.icon className="w-8 h-8 text-primary mb-4" />
-              <h3 className="font-semibold text-foreground mb-2">{prop.title}</h3>
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.08 }}
+              className="group relative bg-card rounded-2xl border border-border p-8 hover:border-primary/20 hover:shadow-xl transition-all duration-300"
+            >
+              <div className="absolute top-0 left-8 w-12 h-[2px] bg-primary/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              <prop.icon className="w-8 h-8 text-primary mb-5" />
+              <h3 className="font-semibold text-lg text-foreground mb-2">{prop.title}</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{prop.description}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
