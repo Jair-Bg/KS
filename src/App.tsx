@@ -7,7 +7,9 @@ import Index from "./pages/Index";
 import Markets from "./pages/Markets";
 import CreateMarket from "./pages/CreateMarket";
 import Dashboard from "./pages/Dashboard";
+import Creators from "./pages/Creators";
 import NotFound from "./pages/NotFound";
+import { AIPredictionAssistant } from "./components/AIPredictionAssistant";
 
 const queryClient = new QueryClient();
 
