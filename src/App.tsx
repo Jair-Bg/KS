@@ -7,6 +7,7 @@ import { ThemeProvider } from "./components/ThemeProvider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Markets from "./pages/Markets";
+import MarketDetail from "./pages/MarketDetail";
 import CreateMarket from "./pages/CreateMarket";
 import Dashboard from "./pages/Dashboard";
 import Creators from "./pages/Creators";
@@ -29,6 +30,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/markets" element={<Markets />} />
+          <Route path="/market/:id" element={<MarketDetail />} />
           <Route path="/create" element={<ProtectedRoute><CreateMarket /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/creators" element={<ProtectedRoute><Creators /></ProtectedRoute>} />

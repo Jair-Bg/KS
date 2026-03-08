@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { BetModal } from "./BetModal";
 
@@ -21,8 +22,10 @@ interface MarketCardProps {
 export function MarketCard({ id, title, subtitle, options, volume, marketsCount }: MarketCardProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [betModal, setBetModal] = useState<{ option: MarketOption } | null>(null);
+  const navigate = useNavigate();
 
-  const handleOddsClick = (index: number, option: MarketOption) => {
+  const handleOddsClick = (e: React.MouseEvent, index: number, option: MarketOption) => {
+    e.stopPropagation();
     if (selectedIndex === index) {
       setSelectedIndex(null);
     } else {
@@ -31,9 +34,13 @@ export function MarketCard({ id, title, subtitle, options, volume, marketsCount 
     }
   };
 
+  const handleCardClick = () => {
+    if (id) navigate(`/market/${id}`);
+  };
+
   return (
     <>
-      <div className="market-card animate-fade-in">
+      <div className="market-card animate-fade-in cursor-pointer" onClick={handleCardClick}>
         <div className="flex items-start justify-between mb-4">
           <div>
             <h3 className="font-semibold text-foreground leading-tight">{title}</h3>
@@ -41,13 +48,10 @@ export function MarketCard({ id, title, subtitle, options, volume, marketsCount 
               <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
             )}
           </div>
-          <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-            🏈
-          </div>
         </div>
 
         <div className="space-y-2">
-          {options.slice(0, 2).map((option, index) => (
+          {options.slice(0, 4).map((option, index) => (
             <div key={index} className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2 min-w-0">
                 {option.icon && (
@@ -55,7 +59,7 @@ export function MarketCard({ id, title, subtitle, options, volume, marketsCount 
                     <span className="text-xs">{option.icon}</span>
                   </div>
                 )}
-                <span className="font-medium truncate">{option.name}</span>
+                <span className="font-medium truncate text-sm">{option.name}</span>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <span className="text-sm text-muted-foreground">{option.payout}</span>
@@ -63,13 +67,18 @@ export function MarketCard({ id, title, subtitle, options, volume, marketsCount 
                   variant={selectedIndex === index ? "oddsActive" : "odds"}
                   size="pill"
                   className="min-w-[60px]"
-                  onClick={() => handleOddsClick(index, option)}
+                  onClick={(e) => handleOddsClick(e, index, option)}
                 >
                   {option.odds}%
                 </Button>
               </div>
             </div>
           ))}
+          {options.length > 4 && (
+            <p className="text-xs text-muted-foreground text-right">
+              +{options.length - 4} more outcomes
+            </p>
+          )}
         </div>
 
         <div className="flex items-center justify-between mt-4 pt-3 border-t border-border text-sm">
@@ -77,9 +86,9 @@ export function MarketCard({ id, title, subtitle, options, volume, marketsCount 
             <span className="text-muted-foreground">{volume} vol</span>
           )}
           {marketsCount && (
-            <a href="#" className="text-primary hover:underline">
+            <span className="text-primary text-xs">
               {marketsCount} markets
-            </a>
+            </span>
           )}
         </div>
       </div>

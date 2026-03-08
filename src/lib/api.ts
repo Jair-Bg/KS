@@ -19,6 +19,15 @@ export interface Market {
   end_date: string;
   created_at: string;
   updated_at: string;
+  options?: MarketOptionRow[];
+}
+
+export interface MarketOptionRow {
+  id: string;
+  market_id: string;
+  name: string;
+  odds: number;
+  sort_order: number;
 }
 
 export interface MarketOption {
@@ -33,6 +42,7 @@ export interface Bet {
   market_id: string;
   user_id: string;
   option: string;
+  option_id: string | null;
   amount: number;
   odds_at_time: number;
   potential_payout: number;
@@ -76,6 +86,15 @@ export function formatVolume(vol: number): string {
 
 // ─── Helper: market to legacy option format ─────────────────────
 export function marketToOptions(market: Market): MarketOption[] {
+  // Multi-outcome
+  if (market.market_type === "multi" && market.options && market.options.length > 0) {
+    return market.options.map((o) => ({
+      name: o.name,
+      odds: Math.round(o.odds),
+      payout: `${(100 / o.odds).toFixed(2)}x`,
+    }));
+  }
+  // Binary
   return [
     { name: "Yes", odds: Math.round(market.yes_odds), payout: `${(100 / market.yes_odds).toFixed(2)}x` },
     { name: "No", odds: Math.round(market.no_odds), payout: `${(100 / market.no_odds).toFixed(2)}x` },
@@ -88,7 +107,7 @@ export async function fetchMarkets(category?: string, search?: string): Promise<
     .from("markets")
     .select("*")
     .eq("status", "active")
-    .order("created_at", { ascending: false })
+    .order("volume", { ascending: false })
     .limit(50);
 
   if (category && category !== "trending") {
@@ -98,9 +117,32 @@ export async function fetchMarkets(category?: string, search?: string): Promise<
     query = query.ilike("question", `%${search}%`);
   }
 
-  const { data, error } = await query;
+  const { data: markets, error } = await query;
   if (error) throw error;
-  return (data as Market[]) || [];
+  
+  // Fetch options for multi-outcome markets
+  const marketIds = (markets || []).filter((m: any) => m.market_type === "multi").map((m: any) => m.id);
+  let optionsMap: Record<string, MarketOptionRow[]> = {};
+  
+  if (marketIds.length > 0) {
+    const { data: allOptions } = await supabase
+      .from("market_options")
+      .select("*")
+      .in("market_id", marketIds)
+      .order("sort_order");
+    
+    if (allOptions) {
+      for (const opt of allOptions as MarketOptionRow[]) {
+        if (!optionsMap[opt.market_id]) optionsMap[opt.market_id] = [];
+        optionsMap[opt.market_id].push(opt);
+      }
+    }
+  }
+
+  return (markets || []).map((m: any) => ({
+    ...m,
+    options: optionsMap[m.id] || [],
+  })) as Market[];
 }
 
 export async function fetchMarket(id: string): Promise<Market | null> {
@@ -120,9 +162,14 @@ export async function createMarket(data: {
   category: string;
   market_type?: string;
   end_date: string;
+  options?: string[];
 }): Promise<Market> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error("Not authenticated");
+
+  const isMulti = data.market_type === "multi" && data.options && data.options.length >= 2;
+  const optionCount = isMulti ? data.options!.length : 2;
+  const initialOdds = Math.round(100 / optionCount);
 
   const { data: market, error } = await supabase
     .from("markets")
@@ -133,13 +180,34 @@ export async function createMarket(data: {
       category: data.category,
       market_type: data.market_type || "binary",
       end_date: data.end_date,
-      yes_odds: 50,
-      no_odds: 50,
+      yes_odds: isMulti ? 0 : 50,
+      no_odds: isMulti ? 0 : 50,
     })
     .select()
     .single();
 
   if (error) throw error;
+
+  // Create options for multi-outcome markets
+  if (isMulti && data.options) {
+    const optionsToInsert = data.options.map((name, i) => ({
+      market_id: market.id,
+      name: name.trim(),
+      odds: initialOdds,
+      sort_order: i,
+    }));
+
+    const { error: optError } = await supabase
+      .from("market_options")
+      .insert(optionsToInsert);
+
+    if (optError) {
+      // Rollback: delete the market
+      await supabase.from("markets").delete().eq("id", market.id);
+      throw optError;
+    }
+  }
+
   return market as Market;
 }
 
