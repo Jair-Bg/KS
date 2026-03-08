@@ -19,6 +19,15 @@ export interface Market {
   end_date: string;
   created_at: string;
   updated_at: string;
+  options?: MarketOptionRow[];
+}
+
+export interface MarketOptionRow {
+  id: string;
+  market_id: string;
+  name: string;
+  odds: number;
+  sort_order: number;
 }
 
 export interface MarketOption {
@@ -33,6 +42,7 @@ export interface Bet {
   market_id: string;
   user_id: string;
   option: string;
+  option_id: string | null;
   amount: number;
   odds_at_time: number;
   potential_payout: number;
@@ -76,6 +86,15 @@ export function formatVolume(vol: number): string {
 
 // ─── Helper: market to legacy option format ─────────────────────
 export function marketToOptions(market: Market): MarketOption[] {
+  // Multi-outcome
+  if (market.market_type === "multi" && market.options && market.options.length > 0) {
+    return market.options.map((o) => ({
+      name: o.name,
+      odds: Math.round(o.odds),
+      payout: `${(100 / o.odds).toFixed(2)}x`,
+    }));
+  }
+  // Binary
   return [
     { name: "Yes", odds: Math.round(market.yes_odds), payout: `${(100 / market.yes_odds).toFixed(2)}x` },
     { name: "No", odds: Math.round(market.no_odds), payout: `${(100 / market.no_odds).toFixed(2)}x` },
