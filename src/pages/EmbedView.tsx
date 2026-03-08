@@ -1,9 +1,6 @@
 import { useParams } from "react-router-dom";
 import { EmbedWidget } from "@/components/EmbedWidget";
 
-// Standalone embed page — designed to be loaded inside an iframe on any external site
-// No header/footer, minimal chrome, transparent-friendly
-
 const mockMarkets: Record<string, { question: string; yesOdds: number; noOdds: number; volume: string }> = {
   abc123: { question: "Bitcoin above $120k by June 2025?", yesOdds: 34, noOdds: 66, volume: "$2.4M" },
   def456: { question: "Kenya opposition wins 2027 presidential election?", yesOdds: 42, noOdds: 58, volume: "$180K" },
@@ -19,6 +16,7 @@ export default function EmbedView() {
   return (
     <div className="min-h-screen bg-transparent p-2">
       <EmbedWidget
+        marketId={id || "abc123"}
         question={market.question}
         yesOdds={market.yesOdds}
         noOdds={market.noOdds}
