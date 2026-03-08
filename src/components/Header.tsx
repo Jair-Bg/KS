@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Search, X } from "lucide-react";
 import { Button } from "./ui/button";
@@ -56,9 +56,13 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     if (query.trim().length > 1) {
-      const results = await searchMarkets(query);
-      setSearchResults(results);
-      setShowSearch(true);
+      try {
+        const results = await searchMarkets(query);
+        setSearchResults(results);
+        setShowSearch(true);
+      } catch {
+        setSearchResults([]);
+      }
     } else {
       setSearchResults([]);
       setShowSearch(false);
@@ -68,7 +72,6 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
   const handleSearchSelect = (market: Market) => {
     setShowSearch(false);
     setSearchQuery("");
-    // Navigate to markets with the relevant category
     if (onCategoryChange) {
       onCategoryChange(market.category);
     }
@@ -156,8 +159,7 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
                         <p className="text-sm font-medium text-foreground truncate">{m.question}</p>
                         <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                           <span className="capitalize">{m.category}</span>
-                          <span>{m.volume} vol</span>
-                          <span>{m.options[0]?.name}: {m.options[0]?.odds}%</span>
+                          <span>Yes: {Math.round(m.yes_odds)}%</span>
                         </div>
                       </button>
                     ))}

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { X, Loader2, CheckCircle2, ExternalLink } from "lucide-react";
-import { placeBet, type Bet } from "@/lib/api";
+import { X, Loader2, CheckCircle2 } from "lucide-react";
+import { placeBet } from "@/lib/api";
 import { useWallet } from "@/hooks/useWallet";
 
 interface BetModalProps {
@@ -18,7 +18,7 @@ interface BetModalProps {
 export function BetModal({ open, onClose, marketId, question, option, odds, payout }: BetModalProps) {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<Bet | null>(null);
+  const [result, setResult] = useState<{ bet_id: string; odds: number; payout: number } | null>(null);
   const [error, setError] = useState("");
   const { connected, balance, connect, isConnecting, refreshBalance } = useWallet();
 
@@ -31,8 +31,8 @@ export function BetModal({ open, onClose, marketId, question, option, odds, payo
     setError("");
     setLoading(true);
     try {
-      const bet = await placeBet({ marketId, option, amount: numAmount });
-      setResult(bet);
+      const betResult = await placeBet({ marketId, option, amount: numAmount });
+      setResult(betResult);
       refreshBalance();
     } catch (e: any) {
       setError(e.message || "Bet failed");
@@ -70,33 +70,26 @@ export function BetModal({ open, onClose, marketId, question, option, odds, payo
               <div>
                 <h4 className="text-lg font-bold text-foreground">Bet Placed! 🎉</h4>
                 <p className="text-sm text-muted-foreground mt-1">
-                  ${result.amount} on <span className="font-semibold text-foreground">{result.option}</span> at {result.odds}%
+                  ${numAmount.toFixed(2)} on <span className="font-semibold text-foreground">{option}</span> at {result.odds}%
+                </p>
+                <p className="text-sm text-success font-semibold mt-1">
+                  Potential payout: ${result.payout}
                 </p>
               </div>
-              {result.txHash && (
-                <a
-                  href={`https://basescan.org/tx/${result.txHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
-                >
-                  View on BaseScan <ExternalLink className="w-3 h-3" />
-                </a>
-              )}
               <Button variant="signup" className="w-full rounded-xl" onClick={handleClose}>
                 Done
               </Button>
             </div>
           ) : !connected ? (
-            /* Connect wallet state */
+            /* Connect / sign in state */
             <div className="text-center space-y-4 py-4">
               <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
-                <span className="text-2xl">🦊</span>
+                <span className="text-2xl">🔑</span>
               </div>
               <div>
-                <h4 className="font-semibold text-foreground">Connect Your Wallet</h4>
+                <h4 className="font-semibold text-foreground">Sign In to Trade</h4>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Connect a wallet to place predictions and earn payouts.
+                  Sign in to place predictions and earn payouts.
                 </p>
               </div>
               <Button
@@ -111,12 +104,9 @@ export function BetModal({ open, onClose, marketId, question, option, odds, payo
                     Connecting...
                   </>
                 ) : (
-                  "Connect Wallet"
+                  "Sign In"
                 )}
               </Button>
-              <p className="text-[11px] text-muted-foreground">
-                Supports MetaMask, WalletConnect, Coinbase Wallet
-              </p>
             </div>
           ) : (
             /* Bet form */
@@ -208,7 +198,7 @@ export function BetModal({ open, onClose, marketId, question, option, odds, payo
               </Button>
 
               <p className="text-[11px] text-center text-muted-foreground">
-                Settlement on Base (L2) · USDC payouts · Tx viewable on BaseScan
+                Settlement on Base (L2) · USDC payouts
               </p>
             </>
           )}

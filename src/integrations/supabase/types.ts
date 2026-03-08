@@ -14,6 +14,107 @@ export type Database = {
   }
   public: {
     Tables: {
+      bets: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          market_id: string
+          odds_at_time: number
+          option: string
+          potential_payout: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          market_id: string
+          odds_at_time: number
+          option: string
+          potential_payout: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          market_id?: string
+          odds_at_time?: number
+          option?: string
+          potential_payout?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bets_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      markets: {
+        Row: {
+          category: string
+          created_at: string
+          creator_id: string
+          description: string | null
+          embed_views: number
+          end_date: string
+          id: string
+          market_type: string
+          no_odds: number
+          question: string
+          resolution: string | null
+          status: string
+          total_traders: number
+          updated_at: string
+          volume: number
+          yes_odds: number
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          embed_views?: number
+          end_date: string
+          id?: string
+          market_type?: string
+          no_odds?: number
+          question: string
+          resolution?: string | null
+          status?: string
+          total_traders?: number
+          updated_at?: string
+          volume?: number
+          yes_odds?: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          embed_views?: number
+          end_date?: string
+          id?: string
+          market_type?: string
+          no_odds?: number
+          question?: string
+          resolution?: string | null
+          status?: string
+          total_traders?: number
+          updated_at?: string
+          volume?: number
+          yes_odds?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -61,7 +162,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      place_bet: {
+        Args: {
+          p_amount: number
+          p_market_id: string
+          p_option: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
