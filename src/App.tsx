@@ -41,6 +41,7 @@ const App = () => (
         <AIPredictionAssistant />
       </BrowserRouter>
     </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

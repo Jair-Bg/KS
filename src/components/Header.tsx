@@ -173,6 +173,7 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
                 </>
               )}
             </div>
+            <ThemeToggle />
             <WalletButton />
           </div>
         </div>
