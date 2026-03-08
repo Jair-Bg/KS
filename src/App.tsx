@@ -8,6 +8,8 @@ import Markets from "./pages/Markets";
 import CreateMarket from "./pages/CreateMarket";
 import Dashboard from "./pages/Dashboard";
 import Creators from "./pages/Creators";
+import EmbedManager from "./pages/EmbedManager";
+import EmbedView from "./pages/EmbedView";
 import NotFound from "./pages/NotFound";
 import { AIPredictionAssistant } from "./components/AIPredictionAssistant";
 
