@@ -296,6 +296,7 @@ export default function Creators() {
                     <span className="text-3xl">▶️</span>
                   </div>
                   <EmbedWidget
+                    marketId="live001"
                     question="Streamer reaches 10K viewers this session?"
                     yesOdds={55}
                     noOdds={45}
