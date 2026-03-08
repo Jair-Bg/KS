@@ -24,9 +24,11 @@ const App = () => (
           <Route path="/markets" element={<Markets />} />
           <Route path="/create" element={<CreateMarket />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/creators" element={<Creators />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <AIPredictionAssistant />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
