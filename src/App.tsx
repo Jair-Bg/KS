@@ -8,6 +8,8 @@ import Markets from "./pages/Markets";
 import CreateMarket from "./pages/CreateMarket";
 import Dashboard from "./pages/Dashboard";
 import Creators from "./pages/Creators";
+import EmbedManager from "./pages/EmbedManager";
+import EmbedView from "./pages/EmbedView";
 import NotFound from "./pages/NotFound";
 import { AIPredictionAssistant } from "./components/AIPredictionAssistant";
 
@@ -25,6 +27,8 @@ const App = () => (
           <Route path="/create" element={<CreateMarket />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/creators" element={<Creators />} />
+          <Route path="/embeds" element={<EmbedManager />} />
+          <Route path="/embed/:id" element={<EmbedView />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
