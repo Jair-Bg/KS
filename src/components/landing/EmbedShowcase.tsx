@@ -45,6 +45,7 @@ export function EmbedShowcase() {
             <div className="text-sm font-semibold text-foreground">Will Kenya's Gen-Z movement reshape 2027 elections?</div>
             <div className="text-xs text-muted-foreground">234K views · 1 day ago</div>
             <EmbedWidget
+              marketId="def456"
               question="Kenya opposition wins 2027 presidential election?"
               yesOdds={42}
               noOdds={58}
