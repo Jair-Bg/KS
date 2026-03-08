@@ -53,15 +53,15 @@ export function EmbedShowcase() {
           >
             <div ref={tweetRef} className="rounded-xl overflow-hidden [&_iframe]:!rounded-xl">
               <blockquote className="twitter-tweet" data-theme="dark" data-conversation="none">
-                <a href="https://twitter.com/polyaboratory/status/1930419523843657779">Loading tweet...</a>
+                <p lang="en" dir="ltr">The Cursor for Hardware is finally here! who wants to test? <a href="https://t.co/dCOcvEjGhT">pic.twitter.com/dCOcvEjGhT</a></p>&mdash; sam (@SamuelBeek) <a href="https://twitter.com/SamuelBeek/status/2020889997646188625">February 9, 2026</a>
               </blockquote>
             </div>
             <EmbedWidget
               marketId="abc123"
-              question="Bitcoin above $120k by June 2025?"
-              yesOdds={34}
-              noOdds={66}
-              volume="$2.4M"
+              question="'Cursor for Hardware' startup raises $50M+ by end of 2026?"
+              yesOdds={41}
+              noOdds={59}
+              volume="$320K"
               compact
             />
             <p className="text-sm text-muted-foreground">Put your prediction where your mouth is 👆</p>
