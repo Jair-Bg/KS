@@ -1,4 +1,4 @@
-import { Globe, Smartphone, Shield, TrendingUp } from "lucide-react";
+import { Globe, Smartphone, Shield, TrendingUp, Zap, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 
 const props = [
@@ -15,51 +15,65 @@ const props = [
   {
     icon: Shield,
     title: "Hybrid settlement",
-    description: "Off-chain for speed. On-chain on Base (Ethereum L2) with USDC for transparency and composability.",
+    description: "Off-chain for speed. On-chain on Base (L2) with USDC for transparency and composability.",
   },
   {
     icon: TrendingUp,
     title: "Contextual liquidity",
     description: "Markets inherit virality from host content. No cold-start — your audience IS the liquidity.",
   },
+  {
+    icon: Zap,
+    title: "AI-powered creation",
+    description: "AI refines your question, suggests parameters, and auto-resolves markets from trusted data sources.",
+  },
+  {
+    icon: BarChart3,
+    title: "Creator analytics",
+    description: "Real-time dashboard with volume, earnings, and engagement metrics for every market you create.",
+  },
 ];
 
 export function ValueProps() {
   return (
-    <section className="py-24">
+    <section id="features" className="py-28 relative">
       <div className="container">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-20 space-y-5"
         >
-          <span className="text-xs font-semibold tracking-widest uppercase text-primary mb-4 block">
-            Why Kastia
-          </span>
-          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
-            Built for creators, not traders
+          <span className="section-label">Why Kastia</span>
+          <h2 className="section-heading">
+            Built for <span className="gradient-text">creators</span>, not traders
           </h2>
-          <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+          <p className="section-subheading mx-auto">
             Prediction infrastructure embedded into the fabric of online conversation.
           </p>
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
           {props.map((prop, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.08 }}
-              className="group relative bg-card rounded-2xl border border-border p-8 hover:border-primary/20 hover:shadow-xl transition-all duration-300"
+              transition={{ duration: 0.5, delay: i * 0.06 }}
+              className="group"
             >
-              <div className="absolute top-0 left-8 w-12 h-[2px] bg-primary/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-              <prop.icon className="w-8 h-8 text-primary mb-5" />
-              <h3 className="font-semibold text-lg text-foreground mb-2">{prop.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{prop.description}</p>
+              <div className="premium-card p-7 h-full relative overflow-hidden">
+                {/* Top accent line */}
+                <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/15 group-hover:scale-110 transition-all duration-300">
+                  <prop.icon className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="font-semibold text-lg text-foreground mb-2">{prop.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{prop.description}</p>
+              </div>
             </motion.div>
           ))}
         </div>

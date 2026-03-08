@@ -1,4 +1,4 @@
-import { Header } from "@/components/Header";
+import { LandingHeader } from "@/components/landing/LandingHeader";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { StatsBar } from "@/components/landing/StatsBar";
 import { EmbedShowcase } from "@/components/landing/EmbedShowcase";
@@ -10,7 +10,7 @@ import { Footer } from "@/components/Footer";
 export default function Index() {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <LandingHeader />
       <main>
         <HeroSection />
         <StatsBar />
