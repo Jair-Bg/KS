@@ -53,7 +53,7 @@ export function EmbedShowcase() {
           >
             <div ref={tweetRef} className="rounded-xl overflow-hidden [&_iframe]:!rounded-xl">
               <blockquote className="twitter-tweet" data-theme="dark" data-conversation="none">
-                <a href="https://twitter.com/polyaboratory/status/1930419523843657779">Loading tweet...</a>
+                <p lang="en" dir="ltr">The Cursor for Hardware is finally here! who wants to test? <a href="https://t.co/dCOcvEjGhT">pic.twitter.com/dCOcvEjGhT</a></p>&mdash; sam (@SamuelBeek) <a href="https://twitter.com/SamuelBeek/status/2020889997646188625">February 9, 2026</a>
               </blockquote>
             </div>
             <EmbedWidget
