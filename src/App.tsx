@@ -27,6 +27,8 @@ const App = () => (
           <Route path="/create" element={<CreateMarket />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/creators" element={<Creators />} />
+          <Route path="/embeds" element={<EmbedManager />} />
+          <Route path="/embed/:id" element={<EmbedView />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
