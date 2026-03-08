@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Markets from "./pages/Markets";
 import CreateMarket from "./pages/CreateMarket";
@@ -28,10 +29,10 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/markets" element={<Markets />} />
-          <Route path="/create" element={<CreateMarket />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/creators" element={<Creators />} />
-          <Route path="/embeds" element={<EmbedManager />} />
+          <Route path="/create" element={<ProtectedRoute><CreateMarket /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/creators" element={<ProtectedRoute><Creators /></ProtectedRoute>} />
+          <Route path="/embeds" element={<ProtectedRoute><EmbedManager /></ProtectedRoute>} />
           <Route path="/embed/:id" element={<EmbedView />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
