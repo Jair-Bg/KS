@@ -1,0 +1,6 @@
+-- Drop prediction market related tables
+DROP TABLE IF EXISTS bets CASCADE;
+DROP TABLE IF EXISTS market_options CASCADE;
+DROP TABLE IF EXISTS markets CASCADE;
+DROP TABLE IF EXISTS odds_history CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
