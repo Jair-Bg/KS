@@ -1,6 +1,10 @@
 import { ChevronRight, TrendingUp, TrendingDown } from "lucide-react";
+import { useEffect, useState } from "react";
+import { fetchMarkets, formatVolume, type Market } from "@/lib/api";
+import { Link } from "react-router-dom";
 
 interface TrendingItem {
+  id: string;
   rank: number;
   title: string;
   subtitle?: string;
@@ -8,34 +12,28 @@ interface TrendingItem {
   change: number;
 }
 
-const trendingItems: TrendingItem[] = [
-  { rank: 1, title: "Who will be next Fed chair?", subtitle: "Kevin Warsh", odds: 41, change: -1 },
-  { rank: 2, title: "Bitcoin price tomorrow at 5pm EST?", subtitle: "$72,250 or above", odds: 39, change: -46 },
-  { rank: 3, title: "Ali Khamenei out as Supreme Leader?", subtitle: "Before September 1, 2026", odds: 38, change: 3 },
-];
+function toItems(markets: Market[]): TrendingItem[] {
+  return markets.slice(0, 3).map((m, i) => ({
+    id: m.id,
+    rank: i + 1,
+    title: m.question,
+    subtitle: formatVolume(m.volume) + " vol",
+    odds: Math.round(m.yes_odds ?? 50),
+    change: 0,
+  }));
+}
 
-const topMovers: TrendingItem[] = [
-  { rank: 1, title: "Who will perform at the Big Game?", subtitle: "Ricky Martin", odds: 79, change: 76 },
-  { rank: 2, title: "Who will headline Govball?", subtitle: "A$AP Rocky", odds: 2, change: -97 },
-  { rank: 3, title: "Anthony Davis's next team?", subtitle: "Washington", odds: 97, change: 96 },
-];
-
-const newMarkets: TrendingItem[] = [
-  { rank: 1, title: "What will KKR say during their next earnings call?", subtitle: "Tariff", odds: 54, change: 54 },
-  { rank: 2, title: "Which sectors will Trump tariff this year?", subtitle: "Critical minerals", odds: 43, change: 43 },
-  { rank: 3, title: "What will the US tariff rate on the EU be on July 1?", subtitle: "Between 10% and 19.99%", odds: 53, change: 53 },
-];
-
-function TrendingSection({ title, items, showNew = false }: { title: string; items: TrendingItem[]; showNew?: boolean }) {
+function TrendingSection({ title, items }: { title: string; items: TrendingItem[] }) {
+  if (items.length === 0) return null;
   return (
     <div className="mb-8">
-      <div className="section-title mb-4">
+      <div className="section-title mb-4 flex items-center justify-between">
         <span>{title}</span>
         <ChevronRight className="w-4 h-4 text-primary" />
       </div>
       <div>
         {items.map((item) => (
-          <div key={item.rank} className="trending-item">
+          <Link to={`/market/${item.id}`} key={item.id} className="trending-item block">
             <div className="flex items-start gap-3 min-w-0">
               <span className="text-sm text-muted-foreground font-medium shrink-0 w-4">{item.rank}</span>
               <div className="min-w-0">
@@ -56,7 +54,7 @@ function TrendingSection({ title, items, showNew = false }: { title: string; ite
                 <span>{Math.abs(item.change)}</span>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
@@ -64,11 +62,29 @@ function TrendingSection({ title, items, showNew = false }: { title: string; ite
 }
 
 export function TrendingSidebar() {
+  const [items, setItems] = useState<TrendingItem[]>([]);
+
+  useEffect(() => {
+    fetchMarkets()
+      .then((markets) => {
+        const sorted = [...markets].sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0));
+        setItems(toItems(sorted));
+      })
+      .catch(() => setItems([]));
+  }, []);
+
+  if (items.length === 0) {
+    return (
+      <aside>
+        <div className="section-title mb-4">By volume</div>
+        <p className="text-sm text-muted-foreground">No markets yet.</p>
+      </aside>
+    );
+  }
+
   return (
     <aside className="space-y-2">
-      <TrendingSection title="Trending" items={trendingItems} />
-      <TrendingSection title="Top movers" items={topMovers} />
-      <TrendingSection title="New" items={newMarkets} showNew />
+      <TrendingSection title="By volume" items={items} />
     </aside>
   );
 }
