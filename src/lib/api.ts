@@ -1,5 +1,5 @@
-// API Service Layer — connected to real backend
-import { supabase } from "@/integrations/supabase/client";
+// API Service Layer — backend tables were removed; returning stub/empty data.
+// TODO: Re-create database schema or wire up on-chain data source.
 
 // ─── Types ───────────────────────────────────────────────────────
 export interface Market {
@@ -77,16 +77,13 @@ export interface EmbedConfig {
   height: string;
 }
 
-// ─── Helper: format volume ──────────────────────────────────────
 export function formatVolume(vol: number): string {
   if (vol >= 1_000_000) return `$${(vol / 1_000_000).toFixed(1)}M`;
   if (vol >= 1_000) return `$${(vol / 1_000).toFixed(0)}K`;
   return `$${vol.toFixed(0)}`;
 }
 
-// ─── Helper: market to legacy option format ─────────────────────
 export function marketToOptions(market: Market): MarketOption[] {
-  // Multi-outcome
   if (market.market_type === "multi" && market.options && market.options.length > 0) {
     return market.options.map((o) => ({
       name: o.name,
@@ -94,69 +91,22 @@ export function marketToOptions(market: Market): MarketOption[] {
       payout: `${(100 / o.odds).toFixed(2)}x`,
     }));
   }
-  // Binary
   return [
     { name: "Yes", odds: Math.round(market.yes_odds), payout: `${(100 / market.yes_odds).toFixed(2)}x` },
     { name: "No", odds: Math.round(market.no_odds), payout: `${(100 / market.no_odds).toFixed(2)}x` },
   ];
 }
 
-// ─── Markets ────────────────────────────────────────────────────
-export async function fetchMarkets(category?: string, search?: string): Promise<Market[]> {
-  let query = supabase
-    .from("markets")
-    .select("*")
-    .eq("status", "active")
-    .order("volume", { ascending: false })
-    .limit(50);
-
-  if (category && category !== "trending") {
-    query = query.eq("category", category);
-  }
-  if (search) {
-    query = query.ilike("question", `%${search}%`);
-  }
-
-  const { data: markets, error } = await query;
-  if (error) throw error;
-  
-  // Fetch options for multi-outcome markets
-  const marketIds = (markets || []).filter((m: any) => m.market_type === "multi").map((m: any) => m.id);
-  let optionsMap: Record<string, MarketOptionRow[]> = {};
-  
-  if (marketIds.length > 0) {
-    const { data: allOptions } = await supabase
-      .from("market_options")
-      .select("*")
-      .in("market_id", marketIds)
-      .order("sort_order");
-    
-    if (allOptions) {
-      for (const opt of allOptions as MarketOptionRow[]) {
-        if (!optionsMap[opt.market_id]) optionsMap[opt.market_id] = [];
-        optionsMap[opt.market_id].push(opt);
-      }
-    }
-  }
-
-  return (markets || []).map((m: any) => ({
-    ...m,
-    options: optionsMap[m.id] || [],
-  })) as Market[];
+// ─── Stubs (DB tables were removed) ─────────────────────────────
+export async function fetchMarkets(_category?: string, _search?: string): Promise<Market[]> {
+  return [];
 }
 
-export async function fetchMarket(id: string): Promise<Market | null> {
-  const { data, error } = await supabase
-    .from("markets")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) return null;
-  return data as Market;
+export async function fetchMarket(_id: string): Promise<Market | null> {
+  return null;
 }
 
-export async function createMarket(data: {
+export async function createMarket(_data: {
   question: string;
   description?: string;
   category: string;
@@ -164,143 +114,33 @@ export async function createMarket(data: {
   end_date: string;
   options?: string[];
 }): Promise<Market> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error("Not authenticated");
-
-  const isMulti = data.market_type === "multi" && data.options && data.options.length >= 2;
-  const optionCount = isMulti ? data.options!.length : 2;
-  const initialOdds = Math.round(100 / optionCount);
-
-  const { data: market, error } = await supabase
-    .from("markets")
-    .insert({
-      creator_id: session.user.id,
-      question: data.question,
-      description: data.description || null,
-      category: data.category,
-      market_type: data.market_type || "binary",
-      end_date: data.end_date,
-      yes_odds: isMulti ? 0 : 50,
-      no_odds: isMulti ? 0 : 50,
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-
-  // Create options for multi-outcome markets
-  if (isMulti && data.options) {
-    const optionsToInsert = data.options.map((name, i) => ({
-      market_id: market.id,
-      name: name.trim(),
-      odds: initialOdds,
-      sort_order: i,
-    }));
-
-    const { error: optError } = await supabase
-      .from("market_options")
-      .insert(optionsToInsert);
-
-    if (optError) {
-      // Rollback: delete the market
-      await supabase.from("markets").delete().eq("id", market.id);
-      throw optError;
-    }
-  }
-
-  return market as Market;
+  throw new Error("Markets backend not configured");
 }
 
 export async function searchMarkets(query: string): Promise<Market[]> {
   return fetchMarkets(undefined, query);
 }
 
-// ─── Betting ────────────────────────────────────────────────────
-export async function placeBet(data: {
+export async function placeBet(_data: {
   marketId: string;
   option: string;
   amount: number;
 }): Promise<{ bet_id: string; odds: number; payout: number; new_yes_odds: number; new_no_odds: number }> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error("Not authenticated");
-
-  const { data: result, error } = await supabase.rpc("place_bet", {
-    p_market_id: data.marketId,
-    p_user_id: session.user.id,
-    p_option: data.option,
-    p_amount: data.amount,
-  });
-
-  if (error) throw error;
-  return result as any;
+  throw new Error("Betting backend not configured");
 }
 
 export async function fetchUserBets(): Promise<Bet[]> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return [];
-
-  const { data, error } = await supabase
-    .from("bets")
-    .select("*")
-    .eq("user_id", session.user.id)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  return (data as Bet[]) || [];
+  return [];
 }
 
-// ─── Creator Dashboard ──────────────────────────────────────────
 export async function fetchCreatorStats(): Promise<CreatorStats> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error("Not authenticated");
-
-  const { data: markets, error } = await supabase
-    .from("markets")
-    .select("*")
-    .eq("creator_id", session.user.id);
-
-  if (error) throw error;
-
-  const allMarkets = (markets as Market[]) || [];
-  const totalVolume = allMarkets.reduce((sum, m) => sum + (m.volume || 0), 0);
-  const totalViews = allMarkets.reduce((sum, m) => sum + (m.embed_views || 0), 0);
-  const activeCount = allMarkets.filter((m) => m.status === "active").length;
-  // Earnings estimate: 10% of volume
-  const earnings = totalVolume * 0.1;
-
-  return {
-    totalEarnings: formatVolume(earnings),
-    totalVolume: formatVolume(totalVolume),
-    embedViews: totalViews >= 1000 ? `${(totalViews / 1000).toFixed(1)}K` : String(totalViews),
-    activeMarkets: activeCount,
-  };
+  return { totalEarnings: "$0", totalVolume: "$0", embedViews: "0", activeMarkets: 0 };
 }
 
 export async function fetchCreatorMarkets(): Promise<Market[]> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return [];
-
-  const { data, error } = await supabase
-    .from("markets")
-    .select("*")
-    .eq("creator_id", session.user.id)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  return (data as Market[]) || [];
+  return [];
 }
 
-// ─── Wallet (now uses profile balance) ──────────────────────────
 export async function getProfileBalance(): Promise<number> {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return 0;
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("balance")
-    .eq("user_id", session.user.id)
-    .single();
-
-  if (error) return 0;
-  return data?.balance || 0;
+  return 0;
 }
