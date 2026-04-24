@@ -49,7 +49,7 @@ export default function Markets() {
     <div className="min-h-screen bg-background">
       <Header activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
       <main className="container py-6">
-        <div className="grid lg:grid-cols-[1fr,320px] gap-8">
+        <div className={`grid gap-8 ${activeCategory === "trending" ? "lg:grid-cols-[1fr,320px]" : ""}`}>
           <div className="space-y-8">
             {loading ? (
               <div className="flex items-center justify-center py-20">
@@ -68,9 +68,11 @@ export default function Markets() {
               ))
             )}
           </div>
-          <div className="hidden lg:block">
-            <TrendingSidebar />
-          </div>
+          {activeCategory === "trending" && (
+            <div className="hidden lg:block">
+              <TrendingSidebar />
+            </div>
+          )}
         </div>
       </main>
       <Footer />
