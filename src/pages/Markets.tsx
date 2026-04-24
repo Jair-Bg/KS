@@ -68,9 +68,11 @@ export default function Markets() {
               ))
             )}
           </div>
-          <div className="hidden lg:block">
-            <TrendingSidebar />
-          </div>
+          {activeCategory === "trending" && (
+            <div className="hidden lg:block">
+              <TrendingSidebar />
+            </div>
+          )}
         </div>
       </main>
       <Footer />
