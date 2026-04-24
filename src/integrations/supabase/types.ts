@@ -20,15 +20,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      place_bet: {
-        Args: {
-          p_amount: number
-          p_market_id: string
-          p_option: string
-          p_user_id: string
-        }
-        Returns: Json
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
