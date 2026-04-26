@@ -1,22 +1,23 @@
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { DollarSign, Eye, BarChart3, TrendingUp, Copy, ExternalLink, Check, Loader2 } from "lucide-react";
+import { Wallet, TrendingUp, History, Award, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchCreatorStats, fetchCreatorMarkets, formatVolume, type Market, type CreatorStats } from "@/lib/api";
+import { fetchUserBets, getProfileBalance, type Bet } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Dashboard() {
-  const [stats, setStats] = useState<CreatorStats | null>(null);
-  const [markets, setMarkets] = useState<Market[]>([]);
+  const { user } = useAuth();
+  const [bets, setBets] = useState<Bet[]>([]);
+  const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
       try {
-        const [s, m] = await Promise.all([fetchCreatorStats(), fetchCreatorMarkets()]);
-        setStats(s);
-        setMarkets(m);
+        const [b, bal] = await Promise.all([fetchUserBets(), getProfileBalance()]);
+        setBets(b);
+        setBalance(bal);
       } catch (e) {
         console.error("Failed to load dashboard:", e);
       } finally {
@@ -26,20 +27,16 @@ export default function Dashboard() {
     load();
   }, []);
 
-  const handleCopyEmbed = (marketId: string) => {
-    const baseUrl = window.location.origin;
-    const code = `<iframe src="${baseUrl}/embed/${marketId}" width="100%" height="200" frameborder="0" style="border:none;border-radius:12px;"></iframe>`;
-    navigator.clipboard.writeText(code);
-    setCopiedId(marketId);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
+  const totalStaked = bets.reduce((s, b) => s + Number(b.amount), 0);
+  const potentialPayout = bets.reduce((s, b) => s + Number(b.potential_payout), 0);
+  const wins = bets.filter((b) => b.status === "won").length;
 
-  const statItems = stats ? [
-    { label: "Total Earnings", value: stats.totalEarnings, icon: DollarSign, change: "+12.4%" },
-    { label: "Total Volume", value: stats.totalVolume, icon: BarChart3, change: "+28.7%" },
-    { label: "Embed Views", value: stats.embedViews, icon: Eye, change: "+8.1%" },
-    { label: "Active Markets", value: String(stats.activeMarkets), icon: TrendingUp, change: `${stats.activeMarkets}` },
-  ] : [];
+  const stats = [
+    { label: "Balance", value: `$${balance.toFixed(2)}`, icon: Wallet },
+    { label: "Total Staked", value: `$${totalStaked.toFixed(2)}`, icon: TrendingUp },
+    { label: "Potential Payout", value: `$${potentialPayout.toFixed(2)}`, icon: Award },
+    { label: "Active Bets", value: String(bets.filter((b) => b.status === "pending").length), icon: History },
+  ];
 
   if (loading) {
     return (
@@ -53,27 +50,28 @@ export default function Dashboard() {
     );
   }
 
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Trader";
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Creator Dashboard</h1>
-            <p className="text-muted-foreground text-sm mt-1">Track your markets, earnings, and embed performance.</p>
+            <h1 className="text-2xl font-bold text-foreground">Welcome back, {displayName}</h1>
+            <p className="text-muted-foreground text-sm mt-1">Track your predictions, balance, and trading history.</p>
           </div>
           <Button variant="signup" size="pill" asChild>
-            <a href="/create">+ New Market</a>
+            <a href="/markets">Browse Markets</a>
           </Button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {statItems.map((stat) => (
+          {stats.map((stat) => (
             <div key={stat.label} className="bg-card rounded-xl border border-border p-5">
               <div className="flex items-center justify-between mb-3">
                 <stat.icon className="w-5 h-5 text-primary" />
-                <span className="text-xs font-medium text-success">{stat.change}</span>
               </div>
               <div className="text-2xl font-bold text-foreground">{stat.value}</div>
               <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
@@ -81,55 +79,52 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Markets Table */}
+        {/* Bets table */}
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           <div className="px-6 py-4 border-b border-border">
-            <h2 className="font-semibold text-foreground">Your Markets</h2>
+            <h2 className="font-semibold text-foreground">Your Predictions</h2>
           </div>
-          {markets.length === 0 ? (
+          {bets.length === 0 ? (
             <div className="px-6 py-12 text-center">
-              <p className="text-muted-foreground mb-4">You haven't created any markets yet.</p>
+              <p className="text-muted-foreground mb-4">You haven't placed any predictions yet.</p>
               <Button variant="signup" size="pill" asChild>
-                <a href="/create">Create Your First Market</a>
+                <a href="/markets">Find a Market</a>
               </Button>
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {markets.map((market) => (
-                <div key={market.id} className="px-6 py-4 hover:bg-secondary/50 transition-colors">
+              {bets.map((bet) => (
+                <div key={bet.id} className="px-6 py-4 hover:bg-secondary/50 transition-colors">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`w-2 h-2 rounded-full ${market.status === "active" ? "bg-success" : "bg-muted-foreground"}`} />
-                        <span className="font-medium text-foreground text-sm truncate">{market.question}</span>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          bet.option.toLowerCase() === "yes"
+                            ? "bg-primary/10 text-primary"
+                            : "bg-muted text-muted-foreground"
+                        }`}>
+                          {bet.option}
+                        </span>
+                        <span className="text-xs text-muted-foreground">@ {Math.round(bet.odds_at_time)}%</span>
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span className="capitalize">{market.category}</span>
-                        <span>Yes: {Math.round(market.yes_odds)}%</span>
-                        <span>{(market.embed_views || 0).toLocaleString()} embed views</span>
-                      </div>
+                      <a
+                        href={`/market/${bet.market_id}`}
+                        className="text-sm font-medium text-foreground hover:text-primary truncate block"
+                      >
+                        Market #{bet.market_id.slice(0, 8)}
+                      </a>
                     </div>
-                    <div className="flex items-center gap-6 shrink-0">
-                      <div className="text-right">
-                        <div className="text-sm font-semibold text-foreground">{formatVolume(market.volume)}</div>
-                        <div className="text-xs text-muted-foreground">volume</div>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleCopyEmbed(market.id)}
-                        >
-                          {copiedId === market.id ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                          <a href={`/embed/${market.id}`} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        </Button>
-                      </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-semibold text-foreground">${Number(bet.amount).toFixed(2)}</div>
+                      <div className="text-xs text-success">→ ${Number(bet.potential_payout).toFixed(2)}</div>
                     </div>
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full self-center ${
+                      bet.status === "won" ? "bg-success/10 text-success" :
+                      bet.status === "lost" ? "bg-destructive/10 text-destructive" :
+                      "bg-secondary text-muted-foreground"
+                    }`}>
+                      {bet.status}
+                    </span>
                   </div>
                 </div>
               ))}
