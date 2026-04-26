@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { ChevronDown, LogOut, History, User, Settings } from "lucide-react";
+import { ChevronDown, LogOut, History, User, Settings, BarChart3 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 export function WalletButton() {
@@ -67,22 +67,34 @@ export function WalletButton() {
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
               >
                 <History className="w-4 h-4" />
-                My Predictions
+                My Dashboard
+              </button>
+              <div className="my-1 border-t border-border" />
+              <div className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                Creator
+              </div>
+              <button
+                onClick={() => { navigate("/creator-dashboard"); setMenuOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+              >
+                <BarChart3 className="w-4 h-4" />
+                Creator Dashboard
               </button>
               <button
-                onClick={() => { navigate("/creators"); setMenuOpen(false); }}
+                onClick={() => { navigate("/create"); setMenuOpen(false); }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
               >
                 <User className="w-4 h-4" />
-                Creator Dashboard
+                New Market
               </button>
               <button
                 onClick={() => { navigate("/embeds"); setMenuOpen(false); }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
               >
                 <Settings className="w-4 h-4" />
-                Embed Manager
+                Embed Toolkit
               </button>
+              <div className="my-1 border-t border-border" />
               <button
                 onClick={async () => { await signOut(); setMenuOpen(false); navigate("/"); }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-destructive hover:bg-secondary transition-colors"
