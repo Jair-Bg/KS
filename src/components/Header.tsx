@@ -25,8 +25,6 @@ const navLinks = [
   { href: "/markets", label: "MARKETS" },
   { href: "/create", label: "CREATE" },
   { href: "/creators", label: "CREATORS" },
-  { href: "/dashboard", label: "DASHBOARD" },
-  { href: "/embeds", label: "EMBEDS" },
 ];
 
 interface HeaderProps {

@@ -1,17 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { Copy, Check, Code2, Monitor, Smartphone, Tv, MessageSquare, Globe, Youtube, Twitch } from "lucide-react";
-
-const sampleMarkets = [
-  { id: "abc123", question: "Bitcoin above $120k by June 2025?", yesOdds: 34, noOdds: 66, volume: "$2.4M" },
-  { id: "def456", question: "Kenya opposition wins 2027?", yesOdds: 42, noOdds: 58, volume: "$180K" },
-  { id: "live001", question: "Streamer reaches 10K viewers this session?", yesOdds: 55, noOdds: 45, volume: "$12K" },
-  { id: "live002", question: "Will he rage-quit in the next 30 minutes?", yesOdds: 38, noOdds: 62, volume: "$8.5K" },
-];
+import { Copy, Check, Code2, Monitor, Smartphone, Tv, MessageSquare, Globe, Youtube, Twitch, Loader2 } from "lucide-react";
+import { fetchCreatorMarkets, formatVolume, type Market } from "@/lib/api";
 
 type EmbedFormat = "iframe" | "script" | "link";
 type EmbedSize = "compact" | "standard" | "large";
@@ -24,28 +18,47 @@ const platformExamples = [
 ];
 
 export default function EmbedManager() {
-  const [selectedMarket, setSelectedMarket] = useState(sampleMarkets[0]);
+  const [markets, setMarkets] = useState<Market[]>([]);
+  const [loadingMarkets, setLoadingMarkets] = useState(true);
+  const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
   const [format, setFormat] = useState<EmbedFormat>("iframe");
   const [size, setSize] = useState<EmbedSize>("standard");
   const [copied, setCopied] = useState(false);
   const [customWidth, setCustomWidth] = useState("100%");
   const [customHeight, setCustomHeight] = useState("220");
 
-  const baseUrl = "https://kastia.app/embed";
+  useEffect(() => {
+    (async () => {
+      try {
+        const m = await fetchCreatorMarkets();
+        setMarkets(m);
+        if (m.length > 0) setSelectedMarket(m[0]);
+      } catch (e) {
+        console.error("Failed to load markets:", e);
+      } finally {
+        setLoadingMarkets(false);
+      }
+    })();
+  }, []);
+
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://kastia.lovable.app";
 
   const getEmbedCode = () => {
+    if (!selectedMarket) return "";
     const sizeParam = size === "compact" ? "&compact=true" : "";
+    const embedUrl = `${baseUrl}/embed/${selectedMarket.id}`;
     switch (format) {
       case "iframe":
-        return `<iframe src="${baseUrl}/${selectedMarket.id}?ref=embed${sizeParam}" width="${customWidth}" height="${customHeight}px" frameborder="0" style="border-radius:12px;overflow:hidden;" allow="clipboard-write"></iframe>`;
+        return `<iframe src="${embedUrl}?ref=embed${sizeParam}" width="${customWidth}" height="${customHeight}px" frameborder="0" style="border-radius:12px;overflow:hidden;" allow="clipboard-write"></iframe>`;
       case "script":
-        return `<div id="kastia-embed-${selectedMarket.id}"></div>\n<script src="https://kastia.app/sdk/embed.js" data-market="${selectedMarket.id}" data-size="${size}"></script>`;
+        return `<div id="kastia-embed-${selectedMarket.id}"></div>\n<script src="${baseUrl}/sdk/embed.js" data-market="${selectedMarket.id}" data-size="${size}"></script>`;
       case "link":
-        return `${baseUrl}/${selectedMarket.id}`;
+        return embedUrl;
     }
   };
 
   const handleCopy = () => {
+    if (!selectedMarket) return;
     navigator.clipboard.writeText(getEmbedCode());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -87,22 +100,33 @@ export default function EmbedManager() {
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
                   <Code2 className="w-4 h-4 text-primary" /> Select Market
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {sampleMarkets.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => setSelectedMarket(m)}
-                      className={`text-left p-3 rounded-lg border transition-all text-sm ${
-                        selectedMarket.id === m.id
-                          ? "border-primary bg-primary/5 text-foreground"
-                          : "border-border bg-secondary/30 text-muted-foreground hover:border-primary/20"
-                      }`}
-                    >
-                      <div className="font-medium leading-tight">{m.question}</div>
-                      <div className="text-xs mt-1 opacity-70">{m.volume} vol</div>
-                    </button>
-                  ))}
-                </div>
+                {loadingMarkets ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  </div>
+                ) : markets.length === 0 ? (
+                  <div className="text-center py-6 text-sm text-muted-foreground">
+                    You haven't created any markets yet.{" "}
+                    <a href="/create" className="text-primary hover:underline">Create one</a> to generate embeds.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {markets.map((m) => (
+                      <button
+                        key={m.id}
+                        onClick={() => setSelectedMarket(m)}
+                        className={`text-left p-3 rounded-lg border transition-all text-sm ${
+                          selectedMarket?.id === m.id
+                            ? "border-primary bg-primary/5 text-foreground"
+                            : "border-border bg-secondary/30 text-muted-foreground hover:border-primary/20"
+                        }`}
+                      >
+                        <div className="font-medium leading-tight line-clamp-2">{m.question}</div>
+                        <div className="text-xs mt-1 opacity-70">{formatVolume(m.volume)} vol</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Format & Size */}
@@ -195,8 +219,7 @@ export default function EmbedManager() {
             <div className="space-y-4">
               <div className="sticky top-24">
                 <h3 className="text-sm font-semibold text-muted-foreground mb-3">Live Preview</h3>
-                
-                {/* Browser mock */}
+
                 <div className="bg-card border border-border rounded-xl overflow-hidden">
                   <div className="bg-secondary/60 px-4 py-2.5 flex items-center gap-2 border-b border-border">
                     <div className="flex gap-1.5">
@@ -205,40 +228,25 @@ export default function EmbedManager() {
                       <div className="w-2.5 h-2.5 rounded-full bg-primary/40" />
                     </div>
                     <div className="flex-1 bg-secondary rounded-md px-3 py-1 text-[10px] text-muted-foreground truncate">
-                      youtube.com/watch?v=live_stream
+                      example.com/article
                     </div>
                   </div>
-                  <div className="p-4 space-y-3">
-                    {/* Fake video area */}
-                    <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center relative">
-                      <span className="text-3xl">▶️</span>
-                      <div className="absolute bottom-2 left-2 text-[10px] bg-destructive text-destructive-foreground px-1.5 py-0.5 rounded font-medium">
-                        ● LIVE
+                  <div className="p-4">
+                    {selectedMarket ? (
+                      <iframe
+                        key={`${selectedMarket.id}-${size}`}
+                        src={`/embed/${selectedMarket.id}?ref=preview${size === "compact" ? "&compact=true" : ""}`}
+                        width="100%"
+                        height={size === "compact" ? 170 : size === "large" ? 300 : 220}
+                        frameBorder="0"
+                        title="Embed preview"
+                        style={{ border: "none", borderRadius: 12, overflow: "hidden" }}
+                      />
+                    ) : (
+                      <div className="text-sm text-muted-foreground text-center py-10">
+                        Select a market to preview your embed.
                       </div>
-                    </div>
-                    <div className="rounded-xl border border-primary/20 bg-card p-3">
-                      <p className={`font-semibold text-foreground mb-2 ${size === "compact" ? "text-xs" : "text-sm"}`}>{selectedMarket.question}</p>
-                      <div className="flex gap-2">
-                        <div className="flex-1 text-center text-xs py-1.5 rounded-full bg-primary/10 text-primary font-medium">Yes {selectedMarket.yesOdds}%</div>
-                        <div className="flex-1 text-center text-xs py-1.5 rounded-full bg-muted text-muted-foreground font-medium">No {selectedMarket.noOdds}%</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Chat panel mock */}
-                <div className="mt-4 bg-card border border-border rounded-xl overflow-hidden">
-                  <div className="px-4 py-2.5 border-b border-border bg-secondary/40">
-                    <span className="text-xs font-semibold text-foreground">Live Chat</span>
-                  </div>
-                  <div className="p-3 space-y-2 text-xs">
-                    <div><span className="text-primary font-medium">@viewer1:</span> <span className="text-muted-foreground">I'm voting YES 🔥</span></div>
-                    <div><span className="text-primary font-medium">@viewer2:</span> <span className="text-muted-foreground">No way, going with NO</span></div>
-                    <div><span className="text-primary font-medium">@viewer3:</span> <span className="text-muted-foreground">This is so cool, bet right from the stream!</span></div>
-                    <div className="border border-primary/20 rounded-lg p-2 bg-primary/5">
-                      <span className="text-[10px] text-primary font-semibold">📊 PREDICTION:</span>
-                      <span className="text-muted-foreground ml-1">{selectedMarket.question}</span>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
