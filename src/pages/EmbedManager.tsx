@@ -1,17 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { Copy, Check, Code2, Monitor, Smartphone, Tv, MessageSquare, Globe, Youtube, Twitch } from "lucide-react";
-
-const sampleMarkets = [
-  { id: "abc123", question: "Bitcoin above $120k by June 2025?", yesOdds: 34, noOdds: 66, volume: "$2.4M" },
-  { id: "def456", question: "Kenya opposition wins 2027?", yesOdds: 42, noOdds: 58, volume: "$180K" },
-  { id: "live001", question: "Streamer reaches 10K viewers this session?", yesOdds: 55, noOdds: 45, volume: "$12K" },
-  { id: "live002", question: "Will he rage-quit in the next 30 minutes?", yesOdds: 38, noOdds: 62, volume: "$8.5K" },
-];
+import { Copy, Check, Code2, Monitor, Smartphone, Tv, MessageSquare, Globe, Youtube, Twitch, Loader2 } from "lucide-react";
+import { fetchCreatorMarkets, formatVolume, type Market } from "@/lib/api";
 
 type EmbedFormat = "iframe" | "script" | "link";
 type EmbedSize = "compact" | "standard" | "large";
@@ -24,14 +18,30 @@ const platformExamples = [
 ];
 
 export default function EmbedManager() {
-  const [selectedMarket, setSelectedMarket] = useState(sampleMarkets[0]);
+  const [markets, setMarkets] = useState<Market[]>([]);
+  const [loadingMarkets, setLoadingMarkets] = useState(true);
+  const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
   const [format, setFormat] = useState<EmbedFormat>("iframe");
   const [size, setSize] = useState<EmbedSize>("standard");
   const [copied, setCopied] = useState(false);
   const [customWidth, setCustomWidth] = useState("100%");
   const [customHeight, setCustomHeight] = useState("220");
 
-  const baseUrl = "https://kastia.app/embed";
+  useEffect(() => {
+    (async () => {
+      try {
+        const m = await fetchCreatorMarkets();
+        setMarkets(m);
+        if (m.length > 0) setSelectedMarket(m[0]);
+      } catch (e) {
+        console.error("Failed to load markets:", e);
+      } finally {
+        setLoadingMarkets(false);
+      }
+    })();
+  }, []);
+
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://kastia.lovable.app";
 
   const getEmbedCode = () => {
     const sizeParam = size === "compact" ? "&compact=true" : "";
