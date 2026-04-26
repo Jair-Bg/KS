@@ -44,18 +44,21 @@ export default function EmbedManager() {
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://kastia.lovable.app";
 
   const getEmbedCode = () => {
+    if (!selectedMarket) return "";
     const sizeParam = size === "compact" ? "&compact=true" : "";
+    const embedUrl = `${baseUrl}/embed/${selectedMarket.id}`;
     switch (format) {
       case "iframe":
-        return `<iframe src="${baseUrl}/${selectedMarket.id}?ref=embed${sizeParam}" width="${customWidth}" height="${customHeight}px" frameborder="0" style="border-radius:12px;overflow:hidden;" allow="clipboard-write"></iframe>`;
+        return `<iframe src="${embedUrl}?ref=embed${sizeParam}" width="${customWidth}" height="${customHeight}px" frameborder="0" style="border-radius:12px;overflow:hidden;" allow="clipboard-write"></iframe>`;
       case "script":
-        return `<div id="kastia-embed-${selectedMarket.id}"></div>\n<script src="https://kastia.app/sdk/embed.js" data-market="${selectedMarket.id}" data-size="${size}"></script>`;
+        return `<div id="kastia-embed-${selectedMarket.id}"></div>\n<script src="${baseUrl}/sdk/embed.js" data-market="${selectedMarket.id}" data-size="${size}"></script>`;
       case "link":
-        return `${baseUrl}/${selectedMarket.id}`;
+        return embedUrl;
     }
   };
 
   const handleCopy = () => {
+    if (!selectedMarket) return;
     navigator.clipboard.writeText(getEmbedCode());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -97,22 +100,33 @@ export default function EmbedManager() {
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
                   <Code2 className="w-4 h-4 text-primary" /> Select Market
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {sampleMarkets.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => setSelectedMarket(m)}
-                      className={`text-left p-3 rounded-lg border transition-all text-sm ${
-                        selectedMarket.id === m.id
-                          ? "border-primary bg-primary/5 text-foreground"
-                          : "border-border bg-secondary/30 text-muted-foreground hover:border-primary/20"
-                      }`}
-                    >
-                      <div className="font-medium leading-tight">{m.question}</div>
-                      <div className="text-xs mt-1 opacity-70">{m.volume} vol</div>
-                    </button>
-                  ))}
-                </div>
+                {loadingMarkets ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  </div>
+                ) : markets.length === 0 ? (
+                  <div className="text-center py-6 text-sm text-muted-foreground">
+                    You haven't created any markets yet.{" "}
+                    <a href="/create" className="text-primary hover:underline">Create one</a> to generate embeds.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {markets.map((m) => (
+                      <button
+                        key={m.id}
+                        onClick={() => setSelectedMarket(m)}
+                        className={`text-left p-3 rounded-lg border transition-all text-sm ${
+                          selectedMarket?.id === m.id
+                            ? "border-primary bg-primary/5 text-foreground"
+                            : "border-border bg-secondary/30 text-muted-foreground hover:border-primary/20"
+                        }`}
+                      >
+                        <div className="font-medium leading-tight line-clamp-2">{m.question}</div>
+                        <div className="text-xs mt-1 opacity-70">{formatVolume(m.volume)} vol</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Format & Size */}
