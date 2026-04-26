@@ -219,8 +219,7 @@ export default function EmbedManager() {
             <div className="space-y-4">
               <div className="sticky top-24">
                 <h3 className="text-sm font-semibold text-muted-foreground mb-3">Live Preview</h3>
-                
-                {/* Browser mock */}
+
                 <div className="bg-card border border-border rounded-xl overflow-hidden">
                   <div className="bg-secondary/60 px-4 py-2.5 flex items-center gap-2 border-b border-border">
                     <div className="flex gap-1.5">
@@ -229,40 +228,25 @@ export default function EmbedManager() {
                       <div className="w-2.5 h-2.5 rounded-full bg-primary/40" />
                     </div>
                     <div className="flex-1 bg-secondary rounded-md px-3 py-1 text-[10px] text-muted-foreground truncate">
-                      youtube.com/watch?v=live_stream
+                      example.com/article
                     </div>
                   </div>
-                  <div className="p-4 space-y-3">
-                    {/* Fake video area */}
-                    <div className="w-full aspect-video bg-muted rounded-lg flex items-center justify-center relative">
-                      <span className="text-3xl">▶️</span>
-                      <div className="absolute bottom-2 left-2 text-[10px] bg-destructive text-destructive-foreground px-1.5 py-0.5 rounded font-medium">
-                        ● LIVE
+                  <div className="p-4">
+                    {selectedMarket ? (
+                      <iframe
+                        key={`${selectedMarket.id}-${size}`}
+                        src={`/embed/${selectedMarket.id}?ref=preview${size === "compact" ? "&compact=true" : ""}`}
+                        width="100%"
+                        height={size === "compact" ? 170 : size === "large" ? 300 : 220}
+                        frameBorder="0"
+                        title="Embed preview"
+                        style={{ border: "none", borderRadius: 12, overflow: "hidden" }}
+                      />
+                    ) : (
+                      <div className="text-sm text-muted-foreground text-center py-10">
+                        Select a market to preview your embed.
                       </div>
-                    </div>
-                    <div className="rounded-xl border border-primary/20 bg-card p-3">
-                      <p className={`font-semibold text-foreground mb-2 ${size === "compact" ? "text-xs" : "text-sm"}`}>{selectedMarket.question}</p>
-                      <div className="flex gap-2">
-                        <div className="flex-1 text-center text-xs py-1.5 rounded-full bg-primary/10 text-primary font-medium">Yes {selectedMarket.yesOdds}%</div>
-                        <div className="flex-1 text-center text-xs py-1.5 rounded-full bg-muted text-muted-foreground font-medium">No {selectedMarket.noOdds}%</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Chat panel mock */}
-                <div className="mt-4 bg-card border border-border rounded-xl overflow-hidden">
-                  <div className="px-4 py-2.5 border-b border-border bg-secondary/40">
-                    <span className="text-xs font-semibold text-foreground">Live Chat</span>
-                  </div>
-                  <div className="p-3 space-y-2 text-xs">
-                    <div><span className="text-primary font-medium">@viewer1:</span> <span className="text-muted-foreground">I'm voting YES 🔥</span></div>
-                    <div><span className="text-primary font-medium">@viewer2:</span> <span className="text-muted-foreground">No way, going with NO</span></div>
-                    <div><span className="text-primary font-medium">@viewer3:</span> <span className="text-muted-foreground">This is so cool, bet right from the stream!</span></div>
-                    <div className="border border-primary/20 rounded-lg p-2 bg-primary/5">
-                      <span className="text-[10px] text-primary font-semibold">📊 PREDICTION:</span>
-                      <span className="text-muted-foreground ml-1">{selectedMarket.question}</span>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
