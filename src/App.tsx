@@ -10,6 +10,7 @@ import Markets from "./pages/Markets";
 import MarketDetail from "./pages/MarketDetail";
 import CreateMarket from "./pages/CreateMarket";
 import Dashboard from "./pages/Dashboard";
+import CreatorDashboard from "./pages/CreatorDashboard";
 import Creators from "./pages/Creators";
 import EmbedManager from "./pages/EmbedManager";
 import EmbedView from "./pages/EmbedView";
@@ -31,7 +32,8 @@ const App = () => (
             <Route path="/market/:id" element={<MarketDetail />} />
             <Route path="/create" element={<ProtectedRoute><CreateMarket /></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/creators" element={<ProtectedRoute><Creators /></ProtectedRoute>} />
+            <Route path="/creator-dashboard" element={<ProtectedRoute><CreatorDashboard /></ProtectedRoute>} />
+            <Route path="/creators" element={<Creators />} />
             <Route path="/embeds" element={<ProtectedRoute><EmbedManager /></ProtectedRoute>} />
             <Route path="/embed/:id" element={<EmbedView />} />
             <Route path="/auth" element={<Auth />} />
