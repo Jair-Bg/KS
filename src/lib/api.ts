@@ -233,3 +233,49 @@ export async function getProfileBalance(): Promise<number> {
   const { data } = await supabase.from("profiles").select("balance").eq("user_id", userData.user.id).maybeSingle();
   return Number(data?.balance ?? 0);
 }
+
+// ─── Watchlist ──────────────────────────────────────────────────
+export async function fetchWatchlistIds(): Promise<Set<string>> {
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return new Set();
+  const { data, error } = await supabase
+    .from("watchlist")
+    .select("market_id")
+    .eq("user_id", userData.user.id);
+  if (error) return new Set();
+  return new Set((data ?? []).map((r) => r.market_id as string));
+}
+
+export async function fetchWatchlistMarkets(): Promise<Market[]> {
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return [];
+  const { data, error } = await supabase
+    .from("watchlist")
+    .select("market_id, markets:market_id(*, options:market_options(*))")
+    .eq("user_id", userData.user.id)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return ((data ?? [])
+    .map((r: any) => r.markets)
+    .filter(Boolean)) as unknown as Market[];
+}
+
+export async function addToWatchlist(marketId: string): Promise<void> {
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) throw new Error("You must be signed in to save markets");
+  const { error } = await supabase
+    .from("watchlist")
+    .insert({ user_id: userData.user.id, market_id: marketId });
+  if (error && !String(error.message).toLowerCase().includes("duplicate")) throw error;
+}
+
+export async function removeFromWatchlist(marketId: string): Promise<void> {
+  const { data: userData } = await supabase.auth.getUser();
+  if (!userData.user) return;
+  const { error } = await supabase
+    .from("watchlist")
+    .delete()
+    .eq("user_id", userData.user.id)
+    .eq("market_id", marketId);
+  if (error) throw error;
+}
