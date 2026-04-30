@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Bookmark } from "lucide-react";
 import { Button } from "./ui/button";
 import { BetModal } from "./BetModal";
+import { useWatchlist } from "@/hooks/useWatchlist";
 
 interface MarketOption {
   name: string;
