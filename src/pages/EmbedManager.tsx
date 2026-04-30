@@ -4,11 +4,12 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { Copy, Check, Code2, Monitor, Smartphone, Tv, MessageSquare, Globe, Youtube, Twitch, Loader2 } from "lucide-react";
+import { Copy, Check, Code2, Monitor, Smartphone, Tv, MessageSquare, Globe, Youtube, Twitch, Loader2, Sun, Moon, Sparkles, Maximize2, LoaderCircle } from "lucide-react";
 import { fetchCreatorMarkets, formatVolume, type Market } from "@/lib/api";
 
 type EmbedFormat = "iframe" | "script" | "link";
 type EmbedSize = "compact" | "standard" | "large";
+type EmbedTheme = "auto" | "light" | "dark";
 
 const platformExamples = [
   { icon: Youtube, name: "YouTube", desc: "Add to video descriptions or live chat panels" },
@@ -26,6 +27,9 @@ export default function EmbedManager() {
   const [copied, setCopied] = useState(false);
   const [customWidth, setCustomWidth] = useState("100%");
   const [customHeight, setCustomHeight] = useState("220");
+  const [theme, setTheme] = useState<EmbedTheme>("auto");
+  const [responsive, setResponsive] = useState(true);
+  const [spinner, setSpinner] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -43,17 +47,26 @@ export default function EmbedManager() {
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://kastia.lovable.app";
 
+  const buildQuery = (ref: string) => {
+    const parts = [`ref=${ref}`];
+    if (size === "compact") parts.push("compact=true");
+    parts.push(`theme=${theme}`);
+    parts.push(`spinner=${spinner ? "true" : "false"}`);
+    return "?" + parts.join("&");
+  };
+
   const getEmbedCode = () => {
     if (!selectedMarket) return "";
-    const sizeParam = size === "compact" ? "&compact=true" : "";
-    const embedUrl = `${baseUrl}/embed/${selectedMarket.id}`;
+    const embedUrl = `${baseUrl}/embed/${selectedMarket.id}${buildQuery("embed")}`;
+    const widthAttr = responsive ? "100%" : customWidth;
+    const styleExtra = responsive ? "max-width:100%;width:100%;" : "";
     switch (format) {
       case "iframe":
-        return `<iframe src="${embedUrl}?ref=embed${sizeParam}" width="${customWidth}" height="${customHeight}px" frameborder="0" style="border-radius:12px;overflow:hidden;" allow="clipboard-write"></iframe>`;
+        return `<iframe src="${embedUrl}" width="${widthAttr}" height="${customHeight}px" frameborder="0" style="border-radius:12px;overflow:hidden;${styleExtra}" allow="clipboard-write" loading="lazy"></iframe>`;
       case "script":
-        return `<div id="kastia-embed-${selectedMarket.id}"></div>\n<script src="${baseUrl}/sdk/embed.js" data-market="${selectedMarket.id}" data-size="${size}"></script>`;
+        return `<div id="kastia-embed-${selectedMarket.id}"></div>\n<script src="${baseUrl}/sdk/embed.js" data-market="${selectedMarket.id}" data-size="${size}" data-theme="${theme}" data-responsive="${responsive}" data-spinner="${spinner}"></script>`;
       case "link":
-        return embedUrl;
+        return `${baseUrl}/embed/${selectedMarket.id}${buildQuery("link")}`;
     }
   };
 
@@ -171,7 +184,48 @@ export default function EmbedManager() {
                   ))}
                 </div>
 
-                {format === "iframe" && (
+                <h3 className="font-semibold text-foreground pt-2">Theme</h3>
+                <div className="flex gap-2">
+                  {([
+                    { key: "auto" as EmbedTheme, label: "Auto", icon: Sparkles },
+                    { key: "light" as EmbedTheme, label: "Light", icon: Sun },
+                    { key: "dark" as EmbedTheme, label: "Dark", icon: Moon },
+                  ]).map((t) => (
+                    <Button
+                      key={t.key}
+                      variant={theme === t.key ? "oddsActive" : "odds"}
+                      size="pill"
+                      onClick={() => setTheme(t.key)}
+                      className="gap-1.5"
+                    >
+                      <t.icon className="w-3.5 h-3.5" />
+                      {t.label}
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <Button
+                    variant={responsive ? "oddsActive" : "odds"}
+                    size="pill"
+                    onClick={() => setResponsive((v) => !v)}
+                    className="gap-1.5"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    Responsive width {responsive ? "On" : "Off"}
+                  </Button>
+                  <Button
+                    variant={spinner ? "oddsActive" : "odds"}
+                    size="pill"
+                    onClick={() => setSpinner((v) => !v)}
+                    className="gap-1.5"
+                  >
+                    <LoaderCircle className="w-3.5 h-3.5" />
+                    Loading spinner {spinner ? "On" : "Off"}
+                  </Button>
+                </div>
+
+                {format === "iframe" && !responsive && (
                   <div className="grid grid-cols-2 gap-3 pt-2">
                     <div>
                       <label className="text-xs font-medium text-muted-foreground mb-1 block">Width</label>
@@ -181,6 +235,12 @@ export default function EmbedManager() {
                       <label className="text-xs font-medium text-muted-foreground mb-1 block">Height (px)</label>
                       <Input value={customHeight} onChange={(e) => setCustomHeight(e.target.value)} className="bg-secondary border-0 h-9 text-sm" />
                     </div>
+                  </div>
+                )}
+                {format === "iframe" && responsive && (
+                  <div className="pt-2">
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Height (px)</label>
+                    <Input value={customHeight} onChange={(e) => setCustomHeight(e.target.value)} className="bg-secondary border-0 h-9 text-sm max-w-[160px]" />
                   </div>
                 )}
               </div>
@@ -234,13 +294,13 @@ export default function EmbedManager() {
                   <div className="p-4">
                     {selectedMarket ? (
                       <iframe
-                        key={`${selectedMarket.id}-${size}`}
-                        src={`/embed/${selectedMarket.id}?ref=preview${size === "compact" ? "&compact=true" : ""}`}
+                        key={`${selectedMarket.id}-${size}-${theme}-${spinner}-${responsive}`}
+                        src={`/embed/${selectedMarket.id}${buildQuery("preview")}`}
                         width="100%"
                         height={size === "compact" ? 170 : size === "large" ? 300 : 220}
                         frameBorder="0"
                         title="Embed preview"
-                        style={{ border: "none", borderRadius: 12, overflow: "hidden" }}
+                        style={{ border: "none", borderRadius: 12, overflow: "hidden", maxWidth: responsive ? "100%" : 520 }}
                       />
                     ) : (
                       <div className="text-sm text-muted-foreground text-center py-10">

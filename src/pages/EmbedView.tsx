@@ -8,9 +8,25 @@ export default function EmbedView() {
   const { id } = useParams<{ id: string }>();
   const [params] = useSearchParams();
   const compact = params.get("compact") === "true";
+  const themeParam = (params.get("theme") || "auto").toLowerCase(); // light | dark | auto
+  const showSpinner = params.get("spinner") !== "false"; // default on
   const [market, setMarket] = useState<Market | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Apply theme class to <html> for the embed iframe document
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove("light", "dark");
+    if (themeParam === "dark") {
+      root.classList.add("dark");
+    } else if (themeParam === "light") {
+      root.classList.add("light");
+    } else {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      root.classList.add(prefersDark ? "dark" : "light");
+    }
+  }, [themeParam]);
 
   useEffect(() => {
     if (!id) return;
@@ -21,7 +37,6 @@ export default function EmbedView() {
         if (cancelled) return;
         if (!m) { setError("Market not found"); return; }
         setMarket(m);
-        // Increment embed view counter (fire and forget)
         await supabase
           .from("markets")
           .update({ embed_views: (m.embed_views ?? 0) + 1 })
@@ -40,8 +55,9 @@ export default function EmbedView() {
   if (loading) {
     return (
       <div className="bg-transparent p-2">
-        <div className="rounded-xl border border-border bg-card p-4 flex items-center justify-center min-h-[120px]">
-          <Loader2 className="w-5 h-5 animate-spin text-primary" />
+        <div className="rounded-xl border border-border bg-card p-4 flex flex-col items-center justify-center min-h-[120px] gap-2">
+          {showSpinner && <Loader2 className="w-5 h-5 animate-spin text-primary" />}
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Loading market…</span>
         </div>
       </div>
     );
@@ -61,8 +77,7 @@ export default function EmbedView() {
 
   return (
     <div className="bg-transparent p-2 font-sans">
-      <div className="rounded-xl border border-primary/20 bg-card overflow-hidden shadow-sm">
-        {/* Header bar */}
+      <div className="rounded-xl border border-primary/20 bg-card overflow-hidden shadow-sm w-full">
         <div className="flex items-center justify-between px-3 py-2 bg-secondary/40 border-b border-border">
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] font-bold text-primary tracking-wide">KASTIA</span>
@@ -78,14 +93,12 @@ export default function EmbedView() {
           </a>
         </div>
 
-        {/* Question */}
         <div className={compact ? "px-3 pt-3" : "px-4 pt-4"}>
           <p className={`font-semibold text-foreground leading-snug ${compact ? "text-xs" : "text-sm"}`}>
             {market.question}
           </p>
         </div>
 
-        {/* Odds bar */}
         <div className={`${compact ? "px-3 py-2.5" : "px-4 py-3"} space-y-2`}>
           <div className="flex h-2 rounded-full overflow-hidden bg-muted">
             {options.slice(0, 2).map((o, i) => (
@@ -115,7 +128,6 @@ export default function EmbedView() {
           </div>
         </div>
 
-        {/* Footer stats */}
         <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-secondary/20 text-[10px] text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <TrendingUp className="w-3 h-3" /> {formatVolume(market.volume)} vol
