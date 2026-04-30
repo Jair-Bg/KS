@@ -4,11 +4,12 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { Copy, Check, Code2, Monitor, Smartphone, Tv, MessageSquare, Globe, Youtube, Twitch, Loader2 } from "lucide-react";
+import { Copy, Check, Code2, Monitor, Smartphone, Tv, MessageSquare, Globe, Youtube, Twitch, Loader2, Sun, Moon, Sparkles, Maximize2, LoaderCircle } from "lucide-react";
 import { fetchCreatorMarkets, formatVolume, type Market } from "@/lib/api";
 
 type EmbedFormat = "iframe" | "script" | "link";
 type EmbedSize = "compact" | "standard" | "large";
+type EmbedTheme = "auto" | "light" | "dark";
 
 const platformExamples = [
   { icon: Youtube, name: "YouTube", desc: "Add to video descriptions or live chat panels" },
@@ -26,6 +27,9 @@ export default function EmbedManager() {
   const [copied, setCopied] = useState(false);
   const [customWidth, setCustomWidth] = useState("100%");
   const [customHeight, setCustomHeight] = useState("220");
+  const [theme, setTheme] = useState<EmbedTheme>("auto");
+  const [responsive, setResponsive] = useState(true);
+  const [spinner, setSpinner] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -43,17 +47,26 @@ export default function EmbedManager() {
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://kastia.lovable.app";
 
+  const buildQuery = (ref: string) => {
+    const parts = [`ref=${ref}`];
+    if (size === "compact") parts.push("compact=true");
+    parts.push(`theme=${theme}`);
+    parts.push(`spinner=${spinner ? "true" : "false"}`);
+    return "?" + parts.join("&");
+  };
+
   const getEmbedCode = () => {
     if (!selectedMarket) return "";
-    const sizeParam = size === "compact" ? "&compact=true" : "";
-    const embedUrl = `${baseUrl}/embed/${selectedMarket.id}`;
+    const embedUrl = `${baseUrl}/embed/${selectedMarket.id}${buildQuery("embed")}`;
+    const widthAttr = responsive ? "100%" : customWidth;
+    const styleExtra = responsive ? "max-width:100%;width:100%;" : "";
     switch (format) {
       case "iframe":
-        return `<iframe src="${embedUrl}?ref=embed${sizeParam}" width="${customWidth}" height="${customHeight}px" frameborder="0" style="border-radius:12px;overflow:hidden;" allow="clipboard-write"></iframe>`;
+        return `<iframe src="${embedUrl}" width="${widthAttr}" height="${customHeight}px" frameborder="0" style="border-radius:12px;overflow:hidden;${styleExtra}" allow="clipboard-write" loading="lazy"></iframe>`;
       case "script":
-        return `<div id="kastia-embed-${selectedMarket.id}"></div>\n<script src="${baseUrl}/sdk/embed.js" data-market="${selectedMarket.id}" data-size="${size}"></script>`;
+        return `<div id="kastia-embed-${selectedMarket.id}"></div>\n<script src="${baseUrl}/sdk/embed.js" data-market="${selectedMarket.id}" data-size="${size}" data-theme="${theme}" data-responsive="${responsive}" data-spinner="${spinner}"></script>`;
       case "link":
-        return embedUrl;
+        return `${baseUrl}/embed/${selectedMarket.id}${buildQuery("link")}`;
     }
   };
 
