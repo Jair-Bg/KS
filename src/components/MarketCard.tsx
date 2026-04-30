@@ -25,7 +25,8 @@ export function MarketCard({ id, title, subtitle, options, volume, marketsCount 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [betModal, setBetModal] = useState<{ option: MarketOption } | null>(null);
   const navigate = useNavigate();
-
+  const { isWatching, toggle } = useWatchlist();
+  const watching = id ? isWatching(id) : false;
   const handleOddsClick = (e: React.MouseEvent, index: number, option: MarketOption) => {
     e.stopPropagation();
     if (selectedIndex === index) {
@@ -43,15 +44,27 @@ export function MarketCard({ id, title, subtitle, options, volume, marketsCount 
   return (
     <>
       <div className="market-card animate-fade-in cursor-pointer" onClick={handleCardClick}>
-        <div className="flex items-start justify-between mb-4">
-          <div>
+        <div className="flex items-start justify-between mb-4 gap-3">
+          <div className="min-w-0">
             <h3 className="font-semibold text-foreground leading-tight">{title}</h3>
             {subtitle && (
               <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
             )}
           </div>
+          {id && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); toggle(id); }}
+              className={`shrink-0 p-1.5 rounded-md transition-colors ${
+                watching ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-label={watching ? "Remove from watchlist" : "Save to watchlist"}
+              title={watching ? "Remove from watchlist" : "Save to watchlist"}
+            >
+              <Bookmark className={`w-4 h-4 ${watching ? "fill-current" : ""}`} />
+            </button>
+          )}
         </div>
-
         <div className="space-y-2">
           {options.slice(0, 4).map((option, index) => (
             <div key={index} className="flex items-center justify-between gap-4">
