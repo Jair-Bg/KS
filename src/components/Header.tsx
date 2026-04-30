@@ -81,14 +81,6 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border">
-      {/* Announcement Bar */}
-      <div className="bg-secondary/80 py-2 px-4 text-center text-sm text-muted-foreground">
-        <span className="inline-flex items-center gap-2">
-          <span className="w-4 h-4 rounded-full bg-muted-foreground/20 flex items-center justify-center text-xs">ℹ</span>
-          Reminder: Weekly scheduled exchange maintenance will occur from 3AM ET - 5AM ET
-        </span>
-      </div>
-
       {/* Main Nav */}
       <div className="container py-3">
         <div className="flex items-center justify-between gap-8">
