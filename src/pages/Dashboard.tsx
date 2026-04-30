@@ -1,23 +1,25 @@
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Wallet, TrendingUp, History, Award, Loader2 } from "lucide-react";
+import { Wallet, TrendingUp, History, Award, Loader2, Bookmark, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchUserBets, getProfileBalance, type Bet } from "@/lib/api";
+import { fetchUserBets, getProfileBalance, fetchWatchlistMarkets, removeFromWatchlist, formatVolume, type Bet, type Market } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
-
+import { toast } from "@/hooks/use-toast";
 export default function Dashboard() {
   const { user } = useAuth();
   const [bets, setBets] = useState<Bet[]>([]);
   const [balance, setBalance] = useState(0);
+  const [watchlist, setWatchlist] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const [b, bal] = await Promise.all([fetchUserBets(), getProfileBalance()]);
+        const [b, bal, wl] = await Promise.all([fetchUserBets(), getProfileBalance(), fetchWatchlistMarkets()]);
         setBets(b);
         setBalance(bal);
+        setWatchlist(wl);
       } catch (e) {
         console.error("Failed to load dashboard:", e);
       } finally {
@@ -26,6 +28,15 @@ export default function Dashboard() {
     }
     load();
   }, []);
+
+  const handleUnwatch = async (marketId: string) => {
+    setWatchlist((prev) => prev.filter((m) => m.id !== marketId));
+    try {
+      await removeFromWatchlist(marketId);
+    } catch (e: any) {
+      toast({ title: "Could not remove", description: e?.message, variant: "destructive" });
+    }
+  };
 
   const totalStaked = bets.reduce((s, b) => s + Number(b.amount), 0);
   const potentialPayout = bets.reduce((s, b) => s + Number(b.potential_payout), 0);
