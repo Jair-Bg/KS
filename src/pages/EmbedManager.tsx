@@ -184,7 +184,48 @@ export default function EmbedManager() {
                   ))}
                 </div>
 
-                {format === "iframe" && (
+                <h3 className="font-semibold text-foreground pt-2">Theme</h3>
+                <div className="flex gap-2">
+                  {([
+                    { key: "auto" as EmbedTheme, label: "Auto", icon: Sparkles },
+                    { key: "light" as EmbedTheme, label: "Light", icon: Sun },
+                    { key: "dark" as EmbedTheme, label: "Dark", icon: Moon },
+                  ]).map((t) => (
+                    <Button
+                      key={t.key}
+                      variant={theme === t.key ? "oddsActive" : "odds"}
+                      size="pill"
+                      onClick={() => setTheme(t.key)}
+                      className="gap-1.5"
+                    >
+                      <t.icon className="w-3.5 h-3.5" />
+                      {t.label}
+                    </Button>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <Button
+                    variant={responsive ? "oddsActive" : "odds"}
+                    size="pill"
+                    onClick={() => setResponsive((v) => !v)}
+                    className="gap-1.5"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    Responsive width {responsive ? "On" : "Off"}
+                  </Button>
+                  <Button
+                    variant={spinner ? "oddsActive" : "odds"}
+                    size="pill"
+                    onClick={() => setSpinner((v) => !v)}
+                    className="gap-1.5"
+                  >
+                    <LoaderCircle className="w-3.5 h-3.5" />
+                    Loading spinner {spinner ? "On" : "Off"}
+                  </Button>
+                </div>
+
+                {format === "iframe" && !responsive && (
                   <div className="grid grid-cols-2 gap-3 pt-2">
                     <div>
                       <label className="text-xs font-medium text-muted-foreground mb-1 block">Width</label>
@@ -194,6 +235,12 @@ export default function EmbedManager() {
                       <label className="text-xs font-medium text-muted-foreground mb-1 block">Height (px)</label>
                       <Input value={customHeight} onChange={(e) => setCustomHeight(e.target.value)} className="bg-secondary border-0 h-9 text-sm" />
                     </div>
+                  </div>
+                )}
+                {format === "iframe" && responsive && (
+                  <div className="pt-2">
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Height (px)</label>
+                    <Input value={customHeight} onChange={(e) => setCustomHeight(e.target.value)} className="bg-secondary border-0 h-9 text-sm max-w-[160px]" />
                   </div>
                 )}
               </div>
@@ -247,13 +294,13 @@ export default function EmbedManager() {
                   <div className="p-4">
                     {selectedMarket ? (
                       <iframe
-                        key={`${selectedMarket.id}-${size}`}
-                        src={`/embed/${selectedMarket.id}?ref=preview${size === "compact" ? "&compact=true" : ""}`}
+                        key={`${selectedMarket.id}-${size}-${theme}-${spinner}-${responsive}`}
+                        src={`/embed/${selectedMarket.id}${buildQuery("preview")}`}
                         width="100%"
                         height={size === "compact" ? 170 : size === "large" ? 300 : 220}
                         frameBorder="0"
                         title="Embed preview"
-                        style={{ border: "none", borderRadius: 12, overflow: "hidden" }}
+                        style={{ border: "none", borderRadius: 12, overflow: "hidden", maxWidth: responsive ? "100%" : 520 }}
                       />
                     ) : (
                       <div className="text-sm text-muted-foreground text-center py-10">
