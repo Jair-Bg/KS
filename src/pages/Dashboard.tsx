@@ -90,6 +90,43 @@ export default function Dashboard() {
           ))}
         </div>
 
+        {/* Watchlist */}
+        <div className="bg-card rounded-xl border border-border overflow-hidden mb-6">
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+            <h2 className="font-semibold text-foreground flex items-center gap-2">
+              <Bookmark className="w-4 h-4 text-primary" /> Watchlist
+              <span className="text-xs text-muted-foreground font-normal">({watchlist.length})</span>
+            </h2>
+            <Button variant="ghost" size="sm" asChild>
+              <a href="/markets">Find more →</a>
+            </Button>
+          </div>
+          {watchlist.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <p className="text-muted-foreground text-sm mb-3">No saved markets yet.</p>
+              <p className="text-muted-foreground text-xs">Tap the bookmark icon on any market card to save it here.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {watchlist.map((m) => (
+                <div key={m.id} className="px-6 py-3 hover:bg-secondary/40 transition-colors flex items-center gap-4">
+                  <a href={`/market/${m.id}`} className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate hover:text-primary transition-colors">{m.question}</p>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                      <span className="capitalize">{m.category}</span>
+                      <span>Yes {Math.round(m.yes_odds)}%</span>
+                      <span>{formatVolume(m.volume)} vol</span>
+                    </div>
+                  </a>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleUnwatch(m.id)} title="Remove">
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Bets table */}
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           <div className="px-6 py-4 border-b border-border">
