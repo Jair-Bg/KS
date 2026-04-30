@@ -61,12 +61,11 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-border">
           <span className="text-sm text-muted-foreground">
-            © 2025 Kastia. All rights reserved.
+            © 2026 Kastia. All rights reserved.
           </span>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">X / Twitter</a>
             <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Discord</a>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
           </div>
         </div>
       </div>
