@@ -1,23 +1,25 @@
 import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Wallet, TrendingUp, History, Award, Loader2 } from "lucide-react";
+import { Wallet, TrendingUp, History, Award, Loader2, Bookmark, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchUserBets, getProfileBalance, type Bet } from "@/lib/api";
+import { fetchUserBets, getProfileBalance, fetchWatchlistMarkets, removeFromWatchlist, formatVolume, type Bet, type Market } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
-
+import { toast } from "@/hooks/use-toast";
 export default function Dashboard() {
   const { user } = useAuth();
   const [bets, setBets] = useState<Bet[]>([]);
   const [balance, setBalance] = useState(0);
+  const [watchlist, setWatchlist] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const [b, bal] = await Promise.all([fetchUserBets(), getProfileBalance()]);
+        const [b, bal, wl] = await Promise.all([fetchUserBets(), getProfileBalance(), fetchWatchlistMarkets()]);
         setBets(b);
         setBalance(bal);
+        setWatchlist(wl);
       } catch (e) {
         console.error("Failed to load dashboard:", e);
       } finally {
@@ -26,6 +28,15 @@ export default function Dashboard() {
     }
     load();
   }, []);
+
+  const handleUnwatch = async (marketId: string) => {
+    setWatchlist((prev) => prev.filter((m) => m.id !== marketId));
+    try {
+      await removeFromWatchlist(marketId);
+    } catch (e: any) {
+      toast({ title: "Could not remove", description: e?.message, variant: "destructive" });
+    }
+  };
 
   const totalStaked = bets.reduce((s, b) => s + Number(b.amount), 0);
   const potentialPayout = bets.reduce((s, b) => s + Number(b.potential_payout), 0);
@@ -77,6 +88,43 @@ export default function Dashboard() {
               <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
             </div>
           ))}
+        </div>
+
+        {/* Watchlist */}
+        <div className="bg-card rounded-xl border border-border overflow-hidden mb-6">
+          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+            <h2 className="font-semibold text-foreground flex items-center gap-2">
+              <Bookmark className="w-4 h-4 text-primary" /> Watchlist
+              <span className="text-xs text-muted-foreground font-normal">({watchlist.length})</span>
+            </h2>
+            <Button variant="ghost" size="sm" asChild>
+              <a href="/markets">Find more →</a>
+            </Button>
+          </div>
+          {watchlist.length === 0 ? (
+            <div className="px-6 py-10 text-center">
+              <p className="text-muted-foreground text-sm mb-3">No saved markets yet.</p>
+              <p className="text-muted-foreground text-xs">Tap the bookmark icon on any market card to save it here.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {watchlist.map((m) => (
+                <div key={m.id} className="px-6 py-3 hover:bg-secondary/40 transition-colors flex items-center gap-4">
+                  <a href={`/market/${m.id}`} className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate hover:text-primary transition-colors">{m.question}</p>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                      <span className="capitalize">{m.category}</span>
+                      <span>Yes {Math.round(m.yes_odds)}%</span>
+                      <span>{formatVolume(m.volume)} vol</span>
+                    </div>
+                  </a>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleUnwatch(m.id)} title="Remove">
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Bets table */}
