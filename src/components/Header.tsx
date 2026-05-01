@@ -83,9 +83,9 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
     <header className="sticky top-0 z-50 bg-background border-b border-border">
       {/* Main Nav */}
       <div className="container py-3">
-        <div className="flex items-center justify-between gap-8">
+        <div className="flex items-center justify-between gap-3 sm:gap-8">
           {/* Logo */}
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-8 min-w-0">
             <a href="/" className="text-2xl font-bold text-primary" onClick={(e) => { e.preventDefault(); navigate("/"); }}>
               Kastia
             </a>
