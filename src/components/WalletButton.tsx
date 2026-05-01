@@ -49,7 +49,7 @@ export function WalletButton() {
         <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
           {initials}
         </span>
-        <span className="text-sm max-w-[120px] truncate">{displayName}</span>
+        <span className="text-sm max-w-[120px] truncate hidden sm:inline">{displayName}</span>
         <ChevronDown className="w-3 h-3" />
       </Button>
 
