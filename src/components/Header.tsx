@@ -173,11 +173,19 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
               <ConnectWalletButton />
             </div>
             <WalletButton />
+            <button
+              type="button"
+              aria-label="Open menu"
+              className="md:hidden p-2 text-foreground"
+              onClick={() => setMobileOpen((v) => !v)}
+            >
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
 
-        {/* Category Pills */}
-        <nav className="flex items-center gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
+        {/* Category Pills - desktop/tablet only */}
+        <nav className="hidden md:flex items-center gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
           {categories.map((cat) => (
             <button
               key={cat.id}
@@ -189,6 +197,81 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
           ))}
         </nav>
       </div>
+
+      {/* Mobile drawer */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden border-t border-border bg-background"
+          >
+            <div className="container py-4 flex flex-col gap-4">
+              {/* Mobile search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search markets..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="w-full pl-10 bg-secondary border-0 rounded-full focus-visible:ring-1"
+                />
+              </div>
+
+              {/* Primary nav links */}
+              <nav className="flex flex-col">
+                {navLinks.map((link) => {
+                  const isActive = location.pathname === link.href;
+                  return (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setMobileOpen(false);
+                        navigate(link.href);
+                      }}
+                      className={`py-2.5 text-sm font-medium border-b border-border last:border-b-0 ${
+                        isActive ? "text-foreground font-semibold" : "text-muted-foreground"
+                      }`}
+                    >
+                      {link.label}
+                    </a>
+                  );
+                })}
+              </nav>
+
+              {/* Categories */}
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
+                  Categories
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        handleCategoryClick(cat.id);
+                        setMobileOpen(false);
+                      }}
+                      className={`category-pill whitespace-nowrap ${currentCategory === cat.id ? 'category-pill-active' : ''}`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="md:hidden">
+                <ConnectWalletButton />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
