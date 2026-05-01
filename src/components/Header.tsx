@@ -38,6 +38,7 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Market[]>([]);
   const [showSearch, setShowSearch] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
