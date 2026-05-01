@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Search, X } from "lucide-react";
+import { Search, X, Menu } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { WalletButton } from "./WalletButton";
