@@ -116,7 +116,7 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
           </div>
 
           {/* Search & Auth */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <div className="relative hidden lg:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -167,7 +167,9 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
               )}
             </div>
             <ThemeToggle />
-            <ConnectWalletButton />
+            <div className="hidden md:block">
+              <ConnectWalletButton />
+            </div>
             <WalletButton />
           </div>
         </div>
