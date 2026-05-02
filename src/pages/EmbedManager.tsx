@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { Copy, Check, Code2, Monitor, Smartphone, Tv, MessageSquare, Globe, Youtube, Twitch, Loader2, Sun, Moon, Sparkles, Maximize2, LoaderCircle } from "lucide-react";
-import { fetchCreatorMarkets, formatVolume, type Market } from "@/lib/api";
+import { fetchCreatorMarkets, fetchMarkets, formatVolume, type Market } from "@/lib/api";
 
 type EmbedFormat = "iframe" | "script" | "link";
 type EmbedSize = "compact" | "standard" | "large";
@@ -34,7 +34,11 @@ export default function EmbedManager() {
   useEffect(() => {
     (async () => {
       try {
-        const m = await fetchCreatorMarkets();
+        let m = await fetchCreatorMarkets();
+        // Demo fallback: if user has no markets yet, show all active markets so embeds are demoable.
+        if (m.length === 0) {
+          m = await fetchMarkets();
+        }
         setMarkets(m);
         if (m.length > 0) setSelectedMarket(m[0]);
       } catch (e) {
