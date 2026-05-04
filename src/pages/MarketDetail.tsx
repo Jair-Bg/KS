@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { ArrowLeft, TrendingUp, Users, Calendar, Loader2 } from "lucide-react";
 export default function MarketDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [market, setMarket] = useState<Market | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,6 +31,21 @@ export default function MarketDetail() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Auto-open bet dialog when arriving from an embed with ?pick=Yes/No
+  useEffect(() => {
+    if (!market) return;
+    const pick = searchParams.get("pick");
+    if (!pick) return;
+    const options = marketToOptions(market);
+    const match = options.find((o) => o.name.toLowerCase() === pick.toLowerCase());
+    if (match) {
+      setPicked(match);
+      const next = new URLSearchParams(searchParams);
+      next.delete("pick");
+      setSearchParams(next, { replace: true });
+    }
+  }, [market, searchParams, setSearchParams]);
 
   if (loading) {
     return (
