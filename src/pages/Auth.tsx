@@ -38,19 +38,24 @@ export default function Auth() {
         if (error) throw error;
         navigate("/markets");
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { full_name: displayName },
+            data: { full_name: displayName, display_name: displayName },
             emailRedirectTo: window.location.origin,
           },
         });
         if (error) throw error;
-        toast({
-          title: "Check your email",
-          description: "We sent you a confirmation link to verify your account.",
-        });
+        if (data.session) {
+          toast({ title: "Welcome!", description: "Your demo account is ready." });
+          navigate("/markets");
+        } else {
+          toast({
+            title: "Check your email",
+            description: "We sent you a confirmation link to verify your account.",
+          });
+        }
       }
     } catch (error: any) {
       toast({
