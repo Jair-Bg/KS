@@ -56,6 +56,7 @@ export function useWallet() {
   const refreshBalance = useCallback(async () => {
     const bal = await getProfileBalance();
     setBalance(bal);
+    return bal;
   }, []);
 
   return { connected, address, balance, isConnecting, connect, disconnect, refreshBalance };
