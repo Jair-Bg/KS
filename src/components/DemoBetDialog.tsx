@@ -55,17 +55,18 @@ export function DemoBetDialog({
     setSubmitting(true);
     try {
       await placeBet({ marketId, option, amount: numAmount });
-      await refreshBalance();
+      const newBalance = await refreshBalance();
+      const updatedBalance = typeof newBalance === "number" ? newBalance : balance - numAmount;
       setDone(true);
       onPlaced?.();
       toast({
-        title: "Bet placed",
-        description: `$${numAmount.toFixed(2)} on ${option} at ${odds}%`,
+        title: "✅ Bet placed",
+        description: `$${numAmount.toFixed(2)} on ${option} at ${odds}% · New balance: $${updatedBalance.toFixed(2)}`,
       });
     } catch (e: any) {
       toast({
-        title: "Bet failed",
-        description: e?.message ?? "Something went wrong",
+        title: "❌ Bet failed",
+        description: `${e?.message ?? "Something went wrong"} · Balance: $${balance.toFixed(2)}`,
         variant: "destructive",
       });
     } finally {
