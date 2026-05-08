@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { fetchMarket, marketToOptions, formatVolume, type Market } from "@/lib/api";
-import { supabase } from "@/integrations/supabase/client";
+import { mockBackend } from "@/lib/mockBackend";
 import { TrendingUp, Users, ExternalLink, Loader2 } from "lucide-react";
 
 export default function EmbedView() {
@@ -37,10 +37,7 @@ export default function EmbedView() {
         if (cancelled) return;
         if (!m) { setError("Market not found"); return; }
         setMarket(m);
-        await supabase
-          .from("markets")
-          .update({ embed_views: (m.embed_views ?? 0) + 1 })
-          .eq("id", id);
+        mockBackend.recordEmbedView(id);
       } catch (e) {
         if (!cancelled) setError("Failed to load market");
       } finally {
