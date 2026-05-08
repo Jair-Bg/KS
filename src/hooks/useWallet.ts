@@ -1,60 +1,30 @@
 import { useState, useCallback, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { getProfileBalance } from "@/lib/api";
+import { mockBackend } from "@/lib/mockBackend";
 import { toast } from "@/hooks/use-toast";
 
+// Demo wallet — always "connected" using the mock backend's local profile.
 export function useWallet() {
-  const [address, setAddress] = useState("");
-  const [balance, setBalance] = useState(0);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const connected = !!address;
+  const [balance, setBalance] = useState<number>(mockBackend.getBalance());
+  const address = "demo@kastia.app";
+  const connected = true;
+  const isConnecting = false;
 
-  // Sync with auth state
   useEffect(() => {
-    const loadUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setAddress(session.user.email || session.user.id.slice(0, 8));
-        const bal = await getProfileBalance();
-        setBalance(bal);
-      }
-    };
-    loadUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setAddress(session.user.email || session.user.id.slice(0, 8));
-        const bal = await getProfileBalance();
-        setBalance(bal);
-      } else {
-        setAddress("");
-        setBalance(0);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    const handler = () => setBalance(mockBackend.getBalance());
+    window.addEventListener("kastia-mock-updated", handler);
+    return () => window.removeEventListener("kastia-mock-updated", handler);
   }, []);
 
   const connect = useCallback(async () => {
-    setIsConnecting(true);
-    // Redirect to auth if not logged in
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      window.location.href = "/auth";
-      return;
-    }
-    setIsConnecting(false);
+    // No-op in demo mode
   }, []);
 
   const disconnect = useCallback(async () => {
-    await supabase.auth.signOut();
-    setAddress("");
-    setBalance(0);
-    toast({ title: "Signed out" });
+    toast({ title: "Demo mode", description: "Sign-out is disabled in the demo." });
   }, []);
 
   const refreshBalance = useCallback(async () => {
-    const bal = await getProfileBalance();
+    const bal = mockBackend.getBalance();
     setBalance(bal);
     return bal;
   }, []);

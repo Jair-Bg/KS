@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
-import { supabase } from "@/integrations/supabase/client";
+import { mockBackend } from "@/lib/mockBackend";
 
 interface OddsChartProps {
   marketId: string;
@@ -15,39 +15,23 @@ interface Point {
 
 export function OddsChart({ marketId, height = 240 }: OddsChartProps) {
   const [data, setData] = useState<Point[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let cancelled = false;
-    supabase
-      .from("odds_history")
-      .select("yes_odds, no_odds, recorded_at")
-      .eq("market_id", marketId)
-      .order("recorded_at", { ascending: true })
-      .limit(200)
-      .then(({ data }) => {
-        if (cancelled) return;
-        setData(
-          (data ?? []).map((d) => ({
-            time: new Date(d.recorded_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
-            yes: Number(d.yes_odds),
-            no: Number(d.no_odds),
-          })),
-        );
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
+    const load = () => {
+      const rows = mockBackend.getOddsHistory(marketId);
+      setData(
+        rows.map((d) => ({
+          time: new Date(d.recorded_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+          yes: Number(d.yes_odds),
+          no: Number(d.no_odds),
+        })),
+      );
     };
+    load();
+    const handler = () => load();
+    window.addEventListener("kastia-mock-updated", handler);
+    return () => window.removeEventListener("kastia-mock-updated", handler);
   }, [marketId]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center text-sm text-muted-foreground" style={{ height }}>
-        Loading…
-      </div>
-    );
-  }
 
   if (data.length === 0) {
     return (
