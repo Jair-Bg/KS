@@ -1,1 +1,4 @@
 project_id = "cwecrtmyhemghqzyywap"
+
+[functions.embed-market]
+verify_jwt = false

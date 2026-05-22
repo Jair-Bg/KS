@@ -1,9 +1,26 @@
-// API Service Layer — fully mocked for demo (localStorage-backed).
-// All reads/writes go through `mockBackend` so the app works without a remote.
-import { mockBackend, type MockMarket } from "./mockBackend";
+// API Service Layer — talks to Lovable Cloud (Supabase) directly.
+import { supabase } from "@/integrations/supabase/client";
 
 // ─── Types ───────────────────────────────────────────────────────
-export type Market = MockMarket;
+export interface Market {
+  id: string;
+  creator_id: string;
+  question: string;
+  description: string | null;
+  category: string;
+  market_type: string;
+  status: string;
+  resolution: string | null;
+  yes_odds: number;
+  no_odds: number;
+  volume: number;
+  total_traders: number;
+  embed_views: number;
+  end_date: string;
+  created_at: string;
+  updated_at: string;
+  options?: MarketOptionRow[];
+}
 
 export interface MarketOptionRow {
   id: string;
@@ -33,18 +50,6 @@ export interface Bet {
   created_at: string;
 }
 
-export interface UserProfile {
-  id: string;
-  user_id: string;
-  display_name: string | null;
-  balance: number | null;
-  total_bets: number | null;
-  total_winnings: number | null;
-  created_markets: number | null;
-  avatar_url: string | null;
-  bio: string | null;
-}
-
 export interface CreatorStats {
   totalEarnings: string;
   totalVolume: string;
@@ -70,23 +75,41 @@ export function marketToOptions(market: Market): MarketOption[] {
   if (market.market_type === "multi" && market.options && market.options.length > 0) {
     return market.options.map((o) => ({
       name: o.name,
-      odds: Math.round(o.odds),
-      payout: `${(100 / Math.max(o.odds, 1)).toFixed(2)}x`,
+      odds: Math.round(Number(o.odds)),
+      payout: `${(100 / Math.max(Number(o.odds), 1)).toFixed(2)}x`,
     }));
   }
+  const yes = Math.round(Number(market.yes_odds));
+  const no = Math.round(Number(market.no_odds));
   return [
-    { name: "Yes", odds: Math.round(market.yes_odds), payout: `${(100 / Math.max(market.yes_odds, 1)).toFixed(2)}x` },
-    { name: "No", odds: Math.round(market.no_odds), payout: `${(100 / Math.max(market.no_odds, 1)).toFixed(2)}x` },
+    { name: "Yes", odds: yes, payout: `${(100 / Math.max(yes, 1)).toFixed(2)}x` },
+    { name: "No", odds: no, payout: `${(100 / Math.max(no, 1)).toFixed(2)}x` },
   ];
 }
 
-// ─── Queries ────────────────────────────────────────────────────
+// ─── Markets ────────────────────────────────────────────────────
 export async function fetchMarkets(category?: string, search?: string): Promise<Market[]> {
-  return mockBackend.listMarkets({ category, search });
+  let q = supabase
+    .from("markets")
+    .select("*")
+    .eq("status", "active")
+    .order("volume", { ascending: false })
+    .limit(50);
+  if (category && category !== "trending") q = q.eq("category", category);
+  if (search) q = q.ilike("question", `%${search}%`);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as Market[];
 }
 
 export async function fetchMarket(id: string): Promise<Market | null> {
-  return mockBackend.getMarket(id);
+  const { data, error } = await supabase.from("markets").select("*").eq("id", id).maybeSingle();
+  if (error) throw error;
+  return (data as Market) ?? null;
+}
+
+export async function searchMarkets(query: string): Promise<Market[]> {
+  return fetchMarkets(undefined, query);
 }
 
 export async function createMarket(payload: {
@@ -97,28 +120,71 @@ export async function createMarket(payload: {
   end_date: string;
   options?: string[];
 }): Promise<Market> {
-  return mockBackend.createMarket(payload);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be signed in to create a market");
+  const { data, error } = await supabase
+    .from("markets")
+    .insert({
+      creator_id: user.id,
+      question: payload.question,
+      description: payload.description ?? null,
+      category: payload.category,
+      market_type: payload.market_type ?? "binary",
+      end_date: payload.end_date,
+      yes_odds: 50,
+      no_odds: 50,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Market;
 }
 
-export async function searchMarkets(query: string): Promise<Market[]> {
-  return fetchMarkets(undefined, query);
-}
-
+// ─── Bets ───────────────────────────────────────────────────────
 export async function placeBet(payload: {
   marketId: string;
   option: string;
   amount: number;
-}): Promise<{ bet_id: string; odds: number; payout: number; new_yes_odds: number; new_no_odds: number; new_balance: number }> {
-  return mockBackend.placeBet(payload);
+}): Promise<{ bet_id: string; odds: number; payout: number; new_yes_odds: number; new_no_odds: number }> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sign in to place a bet");
+  const { data, error } = await supabase.rpc("place_bet", {
+    p_market_id: payload.marketId,
+    p_user_id: user.id,
+    p_option: payload.option,
+    p_amount: payload.amount,
+  });
+  if (error) throw error;
+  return data as any;
 }
 
 export async function fetchUserBets(): Promise<Bet[]> {
-  return mockBackend.getBets();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data, error } = await supabase
+    .from("bets")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Bet[];
+}
+
+// ─── Creator ────────────────────────────────────────────────────
+export async function fetchCreatorMarkets(): Promise<Market[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data, error } = await supabase
+    .from("markets")
+    .select("*")
+    .eq("creator_id", user.id)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Market[];
 }
 
 export async function fetchCreatorStats(): Promise<CreatorStats> {
-  const list = mockBackend.listMarkets();
-  const mine = list.filter((m) => m.creator_id === mockBackend.getUserId());
+  const mine = await fetchCreatorMarkets();
   const totalVolume = mine.reduce((s, m) => s + Number(m.volume ?? 0), 0);
   const embedViews = mine.reduce((s, m) => s + Number(m.embed_views ?? 0), 0);
   const active = mine.filter((m) => m.status === "active").length;
@@ -130,27 +196,53 @@ export async function fetchCreatorStats(): Promise<CreatorStats> {
   };
 }
 
-export async function fetchCreatorMarkets(): Promise<Market[]> {
-  return mockBackend.listMarkets().filter((m) => m.creator_id === mockBackend.getUserId());
-}
-
+// ─── Profile ────────────────────────────────────────────────────
 export async function getProfileBalance(): Promise<number> {
-  return mockBackend.getBalance();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return 0;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("balance")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  return Number(data?.balance ?? 0);
 }
 
 // ─── Watchlist ──────────────────────────────────────────────────
 export async function fetchWatchlistIds(): Promise<Set<string>> {
-  return mockBackend.watchlist.ids();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return new Set();
+  const { data, error } = await supabase.from("watchlist").select("market_id").eq("user_id", user.id);
+  if (error) throw error;
+  return new Set((data ?? []).map((r: any) => r.market_id));
 }
 
 export async function fetchWatchlistMarkets(): Promise<Market[]> {
-  return mockBackend.watchlist.list();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data, error } = await supabase
+    .from("watchlist")
+    .select("market_id, markets(*)")
+    .eq("user_id", user.id);
+  if (error) throw error;
+  return ((data ?? []).map((r: any) => r.markets).filter(Boolean)) as Market[];
 }
 
 export async function addToWatchlist(marketId: string): Promise<void> {
-  mockBackend.watchlist.add(marketId);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Sign in to use watchlist");
+  const { error } = await supabase.from("watchlist").insert({ user_id: user.id, market_id: marketId });
+  if (error && !String(error.message).includes("duplicate")) throw error;
 }
 
 export async function removeFromWatchlist(marketId: string): Promise<void> {
-  mockBackend.watchlist.remove(marketId);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const { error } = await supabase
+    .from("watchlist")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("market_id", marketId);
+  if (error) throw error;
 }

@@ -1,32 +1,54 @@
-import { useState, useCallback, useEffect } from "react";
-import { mockBackend } from "@/lib/mockBackend";
-import { toast } from "@/hooks/use-toast";
+import { useCallback, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./useAuth";
+import { getProfileBalance } from "@/lib/api";
 
-// Demo wallet — always "connected" using the mock backend's local profile.
+// Real wallet — backed by the profiles table.
 export function useWallet() {
-  const [balance, setBalance] = useState<number>(mockBackend.getBalance());
-  const address = "demo@kastia.app";
-  const connected = true;
-  const isConnecting = false;
+  const { user } = useAuth();
+  const connected = !!user;
+  const address = user?.email ?? "";
+  const [balance, setBalance] = useState<number>(0);
+  const [isConnecting] = useState(false);
+
+  const refreshBalance = useCallback(async () => {
+    if (!user) {
+      setBalance(0);
+      return 0;
+    }
+    const bal = await getProfileBalance();
+    setBalance(bal);
+    return bal;
+  }, [user]);
 
   useEffect(() => {
-    const handler = () => setBalance(mockBackend.getBalance());
-    window.addEventListener("kastia-mock-updated", handler);
-    return () => window.removeEventListener("kastia-mock-updated", handler);
-  }, []);
+    refreshBalance();
+  }, [refreshBalance]);
+
+  // Realtime updates when our profile changes (e.g. after place_bet)
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`profile-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `user_id=eq.${user.id}` },
+        (payload: any) => {
+          if (payload?.new?.balance != null) setBalance(Number(payload.new.balance));
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const connect = useCallback(async () => {
-    // No-op in demo mode
+    window.location.href = "/auth";
   }, []);
 
   const disconnect = useCallback(async () => {
-    toast({ title: "Demo mode", description: "Sign-out is disabled in the demo." });
-  }, []);
-
-  const refreshBalance = useCallback(async () => {
-    const bal = mockBackend.getBalance();
-    setBalance(bal);
-    return bal;
+    await supabase.auth.signOut();
   }, []);
 
   return { connected, address, balance, isConnecting, connect, disconnect, refreshBalance };
