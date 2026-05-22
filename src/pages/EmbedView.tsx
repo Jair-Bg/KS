@@ -1,28 +1,26 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { fetchMarket, marketToOptions, formatVolume, type Market } from "@/lib/api";
-import { mockBackend } from "@/lib/mockBackend";
+import { marketToOptions, formatVolume, type Market } from "@/lib/api";
 import { TrendingUp, Users, ExternalLink, Loader2 } from "lucide-react";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 export default function EmbedView() {
   const { id } = useParams<{ id: string }>();
   const [params] = useSearchParams();
   const compact = params.get("compact") === "true";
-  const themeParam = (params.get("theme") || "auto").toLowerCase(); // light | dark | auto
-  const showSpinner = params.get("spinner") !== "false"; // default on
+  const themeParam = (params.get("theme") || "auto").toLowerCase();
+  const showSpinner = params.get("spinner") !== "false";
   const [market, setMarket] = useState<Market | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Apply theme class to <html> for the embed iframe document
   useEffect(() => {
     const root = document.documentElement;
     root.classList.remove("light", "dark");
-    if (themeParam === "dark") {
-      root.classList.add("dark");
-    } else if (themeParam === "light") {
-      root.classList.add("light");
-    } else {
+    if (themeParam === "dark") root.classList.add("dark");
+    else if (themeParam === "light") root.classList.add("light");
+    else {
       const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       root.classList.add(prefersDark ? "dark" : "light");
     }
@@ -33,13 +31,15 @@ export default function EmbedView() {
     let cancelled = false;
     (async () => {
       try {
-        const m = await fetchMarket(id);
-        if (cancelled) return;
-        if (!m) { setError("Market not found"); return; }
-        setMarket(m);
-        mockBackend.recordEmbedView(id);
-      } catch (e) {
-        if (!cancelled) setError("Failed to load market");
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/embed-market/${id}`);
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}));
+          throw new Error(j?.error ?? "Failed to load market");
+        }
+        const m = (await res.json()) as Market;
+        if (!cancelled) setMarket(m);
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message ?? "Failed to load market");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -127,7 +127,7 @@ export default function EmbedView() {
 
         <div className="flex items-center justify-between px-3 py-2 border-t border-border bg-secondary/20 text-[10px] text-muted-foreground">
           <span className="inline-flex items-center gap-1">
-            <TrendingUp className="w-3 h-3" /> {formatVolume(market.volume)} vol
+            <TrendingUp className="w-3 h-3" /> {formatVolume(Number(market.volume))} vol
           </span>
           <span className="inline-flex items-center gap-1">
             <Users className="w-3 h-3" /> {market.total_traders} traders
