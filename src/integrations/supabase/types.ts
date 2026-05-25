@@ -257,6 +257,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_resolve_expired_markets: { Args: never; Returns: number }
       place_bet: {
         Args: {
           p_amount: number
@@ -264,6 +265,10 @@ export type Database = {
           p_option: string
           p_user_id: string
         }
+        Returns: Json
+      }
+      resolve_market: {
+        Args: { p_market_id: string; p_outcome: string }
         Returns: Json
       }
     }
