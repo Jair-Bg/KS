@@ -150,49 +150,28 @@ export default function MarketDetail() {
                 <div className="text-lg font-bold text-foreground">{endDate}</div>
               </div>
             </div>
+
+            <OrderBook
+              marketId={market.id}
+              yesOdds={Number(market.yes_odds)}
+              noOdds={Number(market.no_odds)}
+              volume={Number(market.volume)}
+            />
           </div>
 
-          {/* Right: pick + trade */}
-          <aside className="lg:sticky lg:top-24 self-start space-y-3 bg-card border border-border rounded-2xl p-5">
-            <h3 className="font-semibold text-foreground">Trade</h3>
-            <p className="text-xs text-muted-foreground -mt-1">Pick an outcome to place a demo bet.</p>
-            <div className="space-y-2">
-              {options.map((o, i) => (
-                <button
-                  key={o.name}
-                  onClick={() => setPicked(o)}
-                  className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
-                    i === 0
-                      ? "border-primary/30 bg-primary/5 hover:bg-primary/10"
-                      : "border-border bg-secondary/40 hover:bg-secondary/70"
-                  }`}
-                >
-                  <span className="font-semibold text-foreground">{o.name}</span>
-                  <span className={`text-lg font-bold ${i === 0 ? "text-primary" : "text-foreground"}`}>
-                    {o.odds}%
-                  </span>
-                </button>
-              ))}
-            </div>
-            <p className="text-[11px] text-center text-muted-foreground pt-1">
-              Demo balance · No real money
-            </p>
+          {/* Right: inline trade ticket */}
+          <aside className="lg:sticky lg:top-24 self-start">
+            <TradeTicket
+              marketId={market.id}
+              question={market.question}
+              options={options}
+              initialPick={initialPick}
+              onPlaced={handlePlaced}
+            />
           </aside>
         </div>
       </main>
 
-      {picked && (
-        <DemoBetDialog
-          open={!!picked}
-          onClose={() => setPicked(null)}
-          marketId={market.id}
-          question={market.question}
-          option={picked.name}
-          odds={picked.odds}
-          payout={picked.payout}
-          onPlaced={handlePlaced}
-        />
-      )}
 
       <Footer />
     </div>
