@@ -16,7 +16,7 @@ export default function MarketDetail() {
 
   const [market, setMarket] = useState<Market | null>(null);
   const [loading, setLoading] = useState(true);
-  const [picked, setPicked] = useState<MarketOption | null>(null);
+  const [initialPick, setInitialPick] = useState<string | undefined>(undefined);
   const [chartKey, setChartKey] = useState(0);
 
   const load = useCallback(async () => {
