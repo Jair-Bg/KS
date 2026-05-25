@@ -104,14 +104,31 @@ export default function MarketDetail() {
           {/* Left: question, chart, stats */}
           <div className="space-y-6">
             <div>
-              <span className="inline-block px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium uppercase tracking-wide mb-3">
-                {market.category}
-              </span>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="inline-block px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium uppercase tracking-wide">
+                  {market.category}
+                </span>
+                {market.status === "resolved" && (
+                  <span className="inline-block px-2.5 py-1 rounded-full bg-success/15 text-success text-xs font-semibold uppercase tracking-wide">
+                    Resolved · {market.resolution}
+                  </span>
+                )}
+              </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">
                 {market.question}
               </h1>
               {market.description && (
                 <p className="text-muted-foreground mt-3 leading-relaxed">{market.description}</p>
+              )}
+              {market.status === "resolved" && (
+                <div className="mt-4 p-4 rounded-xl border border-success/30 bg-success/5 text-sm">
+                  <p className="font-semibold text-foreground">
+                    Market settled — outcome: <span className="text-success">{market.resolution}</span>
+                  </p>
+                  <p className="text-muted-foreground mt-1">
+                    Winning positions were paid out automatically to demo balances.
+                  </p>
+                </div>
               )}
             </div>
 
