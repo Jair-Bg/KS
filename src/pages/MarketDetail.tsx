@@ -178,13 +178,22 @@ export default function MarketDetail() {
 
           {/* Right: inline trade ticket */}
           <aside className="lg:sticky lg:top-24 self-start">
-            <TradeTicket
-              marketId={market.id}
-              question={market.question}
-              options={options}
-              initialPick={initialPick}
-              onPlaced={handlePlaced}
-            />
+            {market.status === "resolved" ? (
+              <div className="bg-card border border-border rounded-2xl p-5 text-center space-y-2">
+                <h3 className="font-semibold text-foreground">Trading closed</h3>
+                <p className="text-sm text-muted-foreground">
+                  This market resolved <span className="text-success font-semibold">{market.resolution}</span>.
+                </p>
+              </div>
+            ) : (
+              <TradeTicket
+                marketId={market.id}
+                question={market.question}
+                options={options}
+                initialPick={initialPick}
+                onPlaced={handlePlaced}
+              />
+            )}
           </aside>
         </div>
       </main>
