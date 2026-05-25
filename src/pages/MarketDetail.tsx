@@ -4,8 +4,9 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { OddsChart } from "@/components/OddsChart";
-import { DemoBetDialog } from "@/components/DemoBetDialog";
-import { fetchMarket, marketToOptions, formatVolume, type Market, type MarketOption } from "@/lib/api";
+import { OrderBook } from "@/components/OrderBook";
+import { TradeTicket } from "@/components/TradeTicket";
+import { fetchMarket, marketToOptions, formatVolume, type Market } from "@/lib/api";
 import { ArrowLeft, TrendingUp, Users, Calendar, Loader2 } from "lucide-react";
 
 export default function MarketDetail() {
