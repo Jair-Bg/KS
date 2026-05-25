@@ -33,7 +33,7 @@ export default function MarketDetail() {
     load();
   }, [load]);
 
-  // Auto-open bet dialog when arriving from an embed with ?pick=Yes/No
+  // Pre-fill the trade ticket pick when arriving from an embed with ?pick=Yes/No
   useEffect(() => {
     if (!market) return;
     const pick = searchParams.get("pick");
@@ -41,7 +41,7 @@ export default function MarketDetail() {
     const options = marketToOptions(market);
     const match = options.find((o) => o.name.toLowerCase() === pick.toLowerCase());
     if (match) {
-      setPicked(match);
+      setInitialPick(match.name);
       const next = new URLSearchParams(searchParams);
       next.delete("pick");
       setSearchParams(next, { replace: true });
