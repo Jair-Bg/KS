@@ -21,6 +21,8 @@ interface HeaderProps {
 }
 
 export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
+  const { isCreator } = useUserRole();
+  const navLinks = isCreator ? [baseNavLinks[0], creatorNavLink, baseNavLinks[1]] : baseNavLinks;
   const [localCategory, setLocalCategory] = useState("trending");
   const [dynamicCategories, setDynamicCategories] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
