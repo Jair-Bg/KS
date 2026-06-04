@@ -1,25 +1,12 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Search, X } from "lucide-react";
-import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { WalletButton } from "./WalletButton";
 import { ConnectWalletButton } from "./ConnectWalletButton";
 import { ThemeToggle } from "./ThemeToggle";
-import { searchMarkets, type Market } from "@/lib/api";
+import { searchMarkets, fetchCategories, type Market } from "@/lib/api";
 
-const categories = [
-  { id: "trending", label: "Trending" },
-  { id: "politics", label: "Politics" },
-  { id: "sports", label: "Sports" },
-  { id: "culture", label: "Culture" },
-  { id: "crypto", label: "Crypto" },
-  { id: "climate", label: "Climate" },
-  { id: "economics", label: "Economics" },
-  { id: "companies", label: "Companies" },
-  { id: "financials", label: "Financials" },
-  { id: "tech", label: "Tech & Science" },
-];
 
 const navLinks = [
   { href: "/markets", label: "MARKETS" },
@@ -34,11 +21,18 @@ interface HeaderProps {
 
 export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
   const [localCategory, setLocalCategory] = useState("trending");
+  const [dynamicCategories, setDynamicCategories] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Market[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchCategories()
+      .then((cats) => setDynamicCategories(cats))
+      .catch(() => setDynamicCategories([]));
+  }, []);
 
   const currentCategory = activeCategory ?? localCategory;
   const handleCategoryClick = (id: string) => {
@@ -176,13 +170,19 @@ export function Header({ activeCategory, onCategoryChange }: HeaderProps) {
 
         {/* Category Pills */}
         <nav className="flex items-center gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
-          {categories.map((cat) => (
+          <button
+            onClick={() => handleCategoryClick("trending")}
+            className={`category-pill whitespace-nowrap ${currentCategory === "trending" ? 'category-pill-active' : ''}`}
+          >
+            Trending
+          </button>
+          {dynamicCategories.map((cat) => (
             <button
-              key={cat.id}
-              onClick={() => handleCategoryClick(cat.id)}
-              className={`category-pill whitespace-nowrap ${currentCategory === cat.id ? 'category-pill-active' : ''}`}
+              key={cat}
+              onClick={() => handleCategoryClick(cat)}
+              className={`category-pill whitespace-nowrap ${currentCategory === cat ? 'category-pill-active' : ''}`}
             >
-              {cat.label}
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
             </button>
           ))}
         </nav>
