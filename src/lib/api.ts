@@ -246,3 +246,14 @@ export async function removeFromWatchlist(marketId: string): Promise<void> {
     .eq("market_id", marketId);
   if (error) throw error;
 }
+
+// ─── Categories ─────────────────────────────────────────────────
+export async function fetchCategories(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("markets")
+    .select("category")
+    .eq("status", "active");
+  if (error) throw error;
+  const cats = [...new Set((data ?? []).map((r: any) => r.category).filter(Boolean))];
+  return cats.sort();
+}
