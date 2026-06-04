@@ -31,11 +31,11 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/market/:id" element={<MarketDetail />} />
-            <Route path="/create" element={<ProtectedRoute><CreateMarket /></ProtectedRoute>} />
+            <Route path="/create" element={<CreatorRoute><CreateMarket /></CreatorRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/creator-dashboard" element={<ProtectedRoute><CreatorDashboard /></ProtectedRoute>} />
+            <Route path="/creator-dashboard" element={<CreatorRoute><CreatorDashboard /></CreatorRoute>} />
             <Route path="/creators" element={<Creators />} />
-            <Route path="/embeds" element={<ProtectedRoute><EmbedManager /></ProtectedRoute>} />
+            <Route path="/embeds" element={<CreatorRoute><EmbedManager /></CreatorRoute>} />
             <Route path="/embed/:id" element={<EmbedView />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
