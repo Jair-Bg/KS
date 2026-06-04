@@ -6,13 +6,14 @@ import { WalletButton } from "./WalletButton";
 import { ConnectWalletButton } from "./ConnectWalletButton";
 import { ThemeToggle } from "./ThemeToggle";
 import { searchMarkets, fetchCategories, type Market } from "@/lib/api";
+import { useUserRole } from "@/hooks/useUserRole";
 
 
-const navLinks = [
+const baseNavLinks = [
   { href: "/markets", label: "MARKETS" },
-  { href: "/create", label: "CREATE" },
   { href: "/creators", label: "CREATORS" },
 ];
+const creatorNavLink = { href: "/create", label: "CREATE" };
 
 interface HeaderProps {
   activeCategory?: string;
