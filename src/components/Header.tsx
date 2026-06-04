@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Search, X } from "lucide-react";
-import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { WalletButton } from "./WalletButton";
 import { ConnectWalletButton } from "./ConnectWalletButton";
 import { ThemeToggle } from "./ThemeToggle";
-import { searchMarkets, type Market } from "@/lib/api";
+import { searchMarkets, fetchCategories, type Market } from "@/lib/api";
 
 const categories = [
   { id: "trending", label: "Trending" },
