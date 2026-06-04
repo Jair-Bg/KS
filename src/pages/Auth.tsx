@@ -48,14 +48,19 @@ export default function Auth() {
           email,
           password,
           options: {
-            data: { full_name: displayName, display_name: displayName },
+            data: { full_name: displayName, display_name: displayName, account_type: accountType },
             emailRedirectTo: window.location.origin,
           },
         });
         if (error) throw error;
         if (data.session) {
-          toast({ title: "Welcome!", description: "Your demo account is ready." });
-          navigate("/markets");
+          toast({
+            title: accountType === "creator" ? "Welcome, creator!" : "Welcome!",
+            description: accountType === "creator"
+              ? "Your creator account is ready. Launch your first market."
+              : "Your demo account is ready.",
+          });
+          navigate(accountType === "creator" ? "/creator-dashboard" : "/markets");
         } else {
           toast({
             title: "Check your email",
