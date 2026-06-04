@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { Web3Provider } from "./components/Web3Provider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { CreatorRoute } from "./components/CreatorRoute";
 import Index from "./pages/Index";
 import Markets from "./pages/Markets";
 import MarketDetail from "./pages/MarketDetail";
@@ -30,11 +31,11 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/markets" element={<Markets />} />
             <Route path="/market/:id" element={<MarketDetail />} />
-            <Route path="/create" element={<ProtectedRoute><CreateMarket /></ProtectedRoute>} />
+            <Route path="/create" element={<CreatorRoute><CreateMarket /></CreatorRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/creator-dashboard" element={<ProtectedRoute><CreatorDashboard /></ProtectedRoute>} />
+            <Route path="/creator-dashboard" element={<CreatorRoute><CreatorDashboard /></CreatorRoute>} />
             <Route path="/creators" element={<Creators />} />
-            <Route path="/embeds" element={<ProtectedRoute><EmbedManager /></ProtectedRoute>} />
+            <Route path="/embeds" element={<CreatorRoute><EmbedManager /></CreatorRoute>} />
             <Route path="/embed/:id" element={<EmbedView />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />

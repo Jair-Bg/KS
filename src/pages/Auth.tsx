@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,10 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Loader2, Mail, Lock, User, Eye, EyeOff, TrendingUp, Sparkles } from "lucide-react";
+
+type AccountType = "user" | "creator";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
+  const [searchParams] = useSearchParams();
+  const [accountType, setAccountType] = useState<AccountType>(
+    searchParams.get("type") === "creator" ? "creator" : "user"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -42,14 +48,19 @@ export default function Auth() {
           email,
           password,
           options: {
-            data: { full_name: displayName, display_name: displayName },
+            data: { full_name: displayName, display_name: displayName, account_type: accountType },
             emailRedirectTo: window.location.origin,
           },
         });
         if (error) throw error;
         if (data.session) {
-          toast({ title: "Welcome!", description: "Your demo account is ready." });
-          navigate("/markets");
+          toast({
+            title: accountType === "creator" ? "Welcome, creator!" : "Welcome!",
+            description: accountType === "creator"
+              ? "Your creator account is ready. Launch your first market."
+              : "Your demo account is ready.",
+          });
+          navigate(accountType === "creator" ? "/creator-dashboard" : "/markets");
         } else {
           toast({
             title: "Check your email",
@@ -116,11 +127,48 @@ export default function Auth() {
             Kastia
           </a>
           <p className="text-muted-foreground mt-2">
-            {isLogin ? "Welcome back" : "Create your account"}
+            {isLogin ? "Welcome back" : accountType === "creator" ? "Create your creator account" : "Create your account"}
           </p>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+          {!isLogin && (
+            <div className="mb-6">
+              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">I'm signing up as</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAccountType("user")}
+                  className={`flex items-start gap-2 p-3 rounded-lg border text-left transition-all ${
+                    accountType === "user"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border hover:border-muted-foreground/40"
+                  }`}
+                >
+                  <TrendingUp className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                  <div>
+                    <div className="text-sm font-medium">Trader</div>
+                    <div className="text-xs text-muted-foreground">Bet on markets</div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAccountType("creator")}
+                  className={`flex items-start gap-2 p-3 rounded-lg border text-left transition-all ${
+                    accountType === "creator"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                      : "border-border hover:border-muted-foreground/40"
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                  <div>
+                    <div className="text-sm font-medium">Creator</div>
+                    <div className="text-xs text-muted-foreground">Launch & monetize</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
           {/* Social buttons */}
           <div className="space-y-3 mb-6">
             <Button
