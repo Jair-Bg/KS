@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { Web3Provider } from "./components/Web3Provider";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { CreatorRoute } from "./components/CreatorRoute";
 import Index from "./pages/Index";
 import Markets from "./pages/Markets";
 import MarketDetail from "./pages/MarketDetail";
