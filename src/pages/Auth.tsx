@@ -53,8 +53,6 @@ export default function Auth() {
           email,
           password,
           options: {
-            data: { full_name: displayName, display_name: displayName, account_type: accountType },
-          options: {
             data: { full_name: displayName, display_name: displayName, account_type: "user" },
             emailRedirectTo: window.location.origin,
           },
