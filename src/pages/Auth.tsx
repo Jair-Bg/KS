@@ -14,9 +14,7 @@ type AccountType = "user" | "creator";
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [searchParams] = useSearchParams();
-  const [accountType, setAccountType] = useState<AccountType>(
-    searchParams.get("type") === "creator" ? "creator" : "user"
-  );
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
