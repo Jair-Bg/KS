@@ -39,7 +39,7 @@ export function CreatorCTA() {
                 Join creators turning speculation into revenue. Create your first market in under a minute.
               </p>
               <div className="pt-2">
-                <Link to="/auth">
+                <Link to="/auth/creator">
                   <Button
                     variant="signup"
                     size="lg"

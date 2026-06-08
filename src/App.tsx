@@ -16,6 +16,7 @@ import Creators from "./pages/Creators";
 import EmbedManager from "./pages/EmbedManager";
 import EmbedView from "./pages/EmbedView";
 import Auth from "./pages/Auth";
+import CreatorAuth from "./pages/CreatorAuth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import { AIPredictionAssistant } from "./components/AIPredictionAssistant";
@@ -38,6 +39,8 @@ const App = () => (
             <Route path="/embeds" element={<CreatorRoute><EmbedManager /></CreatorRoute>} />
             <Route path="/embed/:id" element={<EmbedView />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/creator" element={<CreatorAuth />} />
+            <Route path="/creator-signup" element={<CreatorAuth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
