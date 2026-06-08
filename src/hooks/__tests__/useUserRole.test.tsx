@@ -5,7 +5,7 @@ import { useUserRole } from "../useUserRole";
 const useAuthMock = vi.fn();
 const eqMock = vi.fn();
 const selectMock = vi.fn(() => ({ eq: eqMock }));
-const fromMock = vi.fn(() => ({ select: selectMock }));
+const fromMock = vi.fn((_table: string) => ({ select: selectMock }));
 
 vi.mock("@/hooks/useAuth", () => ({ useAuth: () => useAuthMock() }));
 vi.mock("@/integrations/supabase/client", () => ({
