@@ -16,6 +16,7 @@ import Creators from "./pages/Creators";
 import EmbedManager from "./pages/EmbedManager";
 import EmbedView from "./pages/EmbedView";
 import Auth from "./pages/Auth";
+import CreatorAuth from "./pages/CreatorAuth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import { AIPredictionAssistant } from "./components/AIPredictionAssistant";
