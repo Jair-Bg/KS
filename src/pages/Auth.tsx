@@ -14,7 +14,6 @@ type AccountType = "user" | "creator";
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -25,12 +24,20 @@ export default function Auth() {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
 
+  // Redirect creator-type query param to the dedicated creator signup page
+  useEffect(() => {
+    if (searchParams.get("type") === "creator") {
+      navigate("/auth/creator", { replace: true });
+    }
+  }, [searchParams, navigate]);
+
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
       navigate("/markets", { replace: true });
     }
   }, [user, authLoading, navigate]);
+
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
