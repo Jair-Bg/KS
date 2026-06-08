@@ -131,48 +131,26 @@ export default function Auth() {
             Kastia
           </a>
           <p className="text-muted-foreground mt-2">
-            {isLogin ? "Welcome back" : accountType === "creator" ? "Create your creator account" : "Create your account"}
+            {isLogin ? "Welcome back" : "Create your trader account"}
           </p>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
           {!isLogin && (
-            <div className="mb-6">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">I'm signing up as</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setAccountType("user")}
-                  className={`flex items-start gap-2 p-3 rounded-lg border text-left transition-all ${
-                    accountType === "user"
-                      ? "border-primary bg-primary/5 ring-1 ring-primary"
-                      : "border-border hover:border-muted-foreground/40"
-                  }`}
-                >
-                  <TrendingUp className="w-4 h-4 mt-0.5 text-primary shrink-0" />
-                  <div>
-                    <div className="text-sm font-medium">Trader</div>
-                    <div className="text-xs text-muted-foreground">Bet on markets</div>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAccountType("creator")}
-                  className={`flex items-start gap-2 p-3 rounded-lg border text-left transition-all ${
-                    accountType === "creator"
-                      ? "border-primary bg-primary/5 ring-1 ring-primary"
-                      : "border-border hover:border-muted-foreground/40"
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4 mt-0.5 text-primary shrink-0" />
-                  <div>
-                    <div className="text-sm font-medium">Creator</div>
-                    <div className="text-xs text-muted-foreground">Launch & monetize</div>
-                  </div>
-                </button>
+            <div className="mb-6 p-3 rounded-lg border border-primary/20 bg-primary/5 flex items-start gap-3">
+              <Sparkles className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+              <div className="flex-1">
+                <div className="text-sm font-medium">Want to launch markets?</div>
+                <div className="text-xs text-muted-foreground">
+                  Creator accounts have a separate signup.{" "}
+                  <Link to="/auth/creator" className="text-primary font-medium hover:underline">
+                    Sign up as a creator →
+                  </Link>
+                </div>
               </div>
             </div>
           )}
+
           {/* Social buttons */}
           <div className="space-y-3 mb-6">
             <Button
