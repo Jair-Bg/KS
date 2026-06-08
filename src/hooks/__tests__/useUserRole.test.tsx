@@ -9,7 +9,7 @@ const fromMock = vi.fn(() => ({ select: selectMock }));
 
 vi.mock("@/hooks/useAuth", () => ({ useAuth: () => useAuthMock() }));
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { from: (...a: unknown[]) => fromMock(...a) },
+  supabase: { from: (table: string) => fromMock(table) },
 }));
 
 describe("useUserRole — role assignment after login", () => {
