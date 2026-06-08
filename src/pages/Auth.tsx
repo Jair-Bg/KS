@@ -54,18 +54,18 @@ export default function Auth() {
           password,
           options: {
             data: { full_name: displayName, display_name: displayName, account_type: accountType },
+          options: {
+            data: { full_name: displayName, display_name: displayName, account_type: "user" },
             emailRedirectTo: window.location.origin,
           },
         });
         if (error) throw error;
         if (data.session) {
           toast({
-            title: accountType === "creator" ? "Welcome, creator!" : "Welcome!",
-            description: accountType === "creator"
-              ? "Your creator account is ready. Launch your first market."
-              : "Your demo account is ready.",
+            title: "Welcome!",
+            description: "Your demo account is ready.",
           });
-          navigate(accountType === "creator" ? "/creator-dashboard" : "/markets");
+          navigate("/markets");
         } else {
           toast({
             title: "Check your email",
@@ -80,6 +80,7 @@ export default function Auth() {
         variant: "destructive",
       });
     } finally {
+
       setLoading(false);
     }
   };
