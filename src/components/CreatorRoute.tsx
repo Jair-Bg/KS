@@ -33,7 +33,7 @@ export function CreatorRoute({ children }: { children: React.ReactNode }) {
           </p>
           <div className="flex gap-2 justify-center pt-2">
             <Link to="/markets"><Button variant="outline">Browse markets</Button></Link>
-            <Link to="/auth?type=creator"><Button>Become a creator</Button></Link>
+            <Link to="/auth/creator"><Button>Become a creator</Button></Link>
           </div>
         </div>
       </div>
