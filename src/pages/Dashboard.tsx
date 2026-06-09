@@ -3,22 +3,22 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Wallet, TrendingUp, History, Award, Loader2, Bookmark, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchUserBets, getProfileBalance, fetchWatchlistMarkets, removeFromWatchlist, formatVolume, type Bet, type Market } from "@/lib/api";
+import { fetchUserBets, fetchWatchlistMarkets, removeFromWatchlist, formatVolume, type Bet, type Market } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useWallet } from "@/hooks/useWallet";
 import { toast } from "@/hooks/use-toast";
 export default function Dashboard() {
   const { user } = useAuth();
+  const { balance } = useWallet();
   const [bets, setBets] = useState<Bet[]>([]);
-  const [balance, setBalance] = useState(0);
   const [watchlist, setWatchlist] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       try {
-        const [b, bal, wl] = await Promise.all([fetchUserBets(), getProfileBalance(), fetchWatchlistMarkets()]);
+        const [b, wl] = await Promise.all([fetchUserBets(), fetchWatchlistMarkets()]);
         setBets(b);
-        setBalance(bal);
         setWatchlist(wl);
       } catch (e) {
         console.error("Failed to load dashboard:", e);
