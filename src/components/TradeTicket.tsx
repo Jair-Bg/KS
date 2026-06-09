@@ -27,6 +27,15 @@ interface TradeTicketProps {
 
 type Side = "buy" | "sell";
 
+const CHAIN_OPTIONS = [
+  { id: base.id, name: base.name },
+  { id: baseSepolia.id, name: baseSepolia.name },
+];
+
+function truncateAddress(addr: string) {
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+}
+
 export function TradeTicket({ marketId, question, options, initialPick, onPlaced }: TradeTicketProps) {
   const { connected, balance, refreshBalance } = useWallet();
   const navigate = useNavigate();
@@ -34,6 +43,24 @@ export function TradeTicket({ marketId, question, options, initialPick, onPlaced
   const [side, setSide] = useState<Side>("buy");
   const [amount, setAmount] = useState("2");
   const [submitting, setSubmitting] = useState(false);
+  const [chainId, setChainId] = useState<number>(() => {
+    const saved = localStorage.getItem("kastia:usdc-chain");
+    return saved ? Number(saved) : baseSepolia.id;
+  });
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("kastia:usdc-chain", String(chainId));
+  }, [chainId]);
+
+  const activeChain = CHAIN_OPTIONS.find((c) => c.id === chainId) ?? CHAIN_OPTIONS[0];
+  const usdcAddress = USDC.addresses[chainId as keyof typeof USDC.addresses] ?? USDC.addresses[baseSepolia.id];
+
+  const handleCopyAddress = () => {
+    navigator.clipboard.writeText(usdcAddress);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   useEffect(() => {
     if (initialPick) setPick(initialPick);
