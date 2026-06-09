@@ -1,11 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Loader2 } from "lucide-react";
+import { Loader2, Copy, Check } from "lucide-react";
 import { placeBet, type MarketOption } from "@/lib/api";
 import { useWallet } from "@/hooks/useWallet";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { base, baseSepolia } from "wagmi/chains";
+import { USDC } from "@/lib/wagmi";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 
 interface TradeTicketProps {
   marketId: string;
@@ -17,6 +27,15 @@ interface TradeTicketProps {
 
 type Side = "buy" | "sell";
 
+const CHAIN_OPTIONS = [
+  { id: base.id, name: base.name },
+  { id: baseSepolia.id, name: baseSepolia.name },
+];
+
+function truncateAddress(addr: string) {
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+}
+
 export function TradeTicket({ marketId, question, options, initialPick, onPlaced }: TradeTicketProps) {
   const { connected, balance, refreshBalance } = useWallet();
   const navigate = useNavigate();
@@ -24,6 +43,24 @@ export function TradeTicket({ marketId, question, options, initialPick, onPlaced
   const [side, setSide] = useState<Side>("buy");
   const [amount, setAmount] = useState("2");
   const [submitting, setSubmitting] = useState(false);
+  const [chainId, setChainId] = useState<number>(() => {
+    const saved = localStorage.getItem("kastia:usdc-chain");
+    return saved ? Number(saved) : baseSepolia.id;
+  });
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("kastia:usdc-chain", String(chainId));
+  }, [chainId]);
+
+  const activeChain = CHAIN_OPTIONS.find((c) => c.id === chainId) ?? CHAIN_OPTIONS[0];
+  const usdcAddress = USDC.addresses[chainId as keyof typeof USDC.addresses] ?? USDC.addresses[baseSepolia.id];
+
+  const handleCopyAddress = () => {
+    navigator.clipboard.writeText(usdcAddress);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
 
   useEffect(() => {
     if (initialPick) setPick(initialPick);
@@ -67,7 +104,7 @@ export function TradeTicket({ marketId, question, options, initialPick, onPlaced
         title: side === "buy" ? "✅ Order filled" : "✅ Exit filled",
         description: `${side === "buy" ? "Bought" : "Sold via"} ${effectiveOption} · ${shares.toFixed(1)} shares @ ${priceCents}¢ · payout $${Number(res.payout).toFixed(2)}`,
       });
-      setAmount("25");
+      setAmount("2");
     } catch (e: any) {
       toast({
         title: "❌ Order failed",
@@ -101,6 +138,32 @@ export function TradeTicket({ marketId, question, options, initialPick, onPlaced
             Sell
           </button>
         </div>
+      </div>
+
+      {/* Network selector */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Network</span>
+          <Select value={String(chainId)} onValueChange={(v) => setChainId(Number(v))}>
+            <SelectTrigger className="h-7 text-xs w-[140px] bg-secondary border-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CHAIN_OPTIONS.map((c) => (
+                <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <button
+          onClick={handleCopyAddress}
+          className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+          title="Copy USDC address"
+          type="button"
+        >
+          <span className="font-mono">{truncateAddress(usdcAddress)}</span>
+          {copied ? <Check className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3" />}
+        </button>
       </div>
 
       {/* Outcome selector */}
