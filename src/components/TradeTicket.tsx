@@ -1,11 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Loader2 } from "lucide-react";
+import { Loader2, Copy, Check } from "lucide-react";
 import { placeBet, type MarketOption } from "@/lib/api";
 import { useWallet } from "@/hooks/useWallet";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { base, baseSepolia } from "wagmi/chains";
+import { USDC } from "@/lib/wagmi";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 
 interface TradeTicketProps {
   marketId: string;
