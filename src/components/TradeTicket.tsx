@@ -104,7 +104,7 @@ export function TradeTicket({ marketId, question, options, initialPick, onPlaced
         title: side === "buy" ? "✅ Order filled" : "✅ Exit filled",
         description: `${side === "buy" ? "Bought" : "Sold via"} ${effectiveOption} · ${shares.toFixed(1)} shares @ ${priceCents}¢ · payout $${Number(res.payout).toFixed(2)}`,
       });
-      setAmount("25");
+      setAmount("2");
     } catch (e: any) {
       toast({
         title: "❌ Order failed",
@@ -138,6 +138,32 @@ export function TradeTicket({ marketId, question, options, initialPick, onPlaced
             Sell
           </button>
         </div>
+      </div>
+
+      {/* Network selector */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">Network</span>
+          <Select value={String(chainId)} onValueChange={(v) => setChainId(Number(v))}>
+            <SelectTrigger className="h-7 text-xs w-[140px] bg-secondary border-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CHAIN_OPTIONS.map((c) => (
+                <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <button
+          onClick={handleCopyAddress}
+          className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+          title="Copy USDC address"
+          type="button"
+        >
+          <span className="font-mono">{truncateAddress(usdcAddress)}</span>
+          {copied ? <Check className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3" />}
+        </button>
       </div>
 
       {/* Outcome selector */}
