@@ -70,7 +70,7 @@ export const USDC = {
 } as const;
 
 // Backwards compatible exports
-export const USDC_ADDRESS = USDC.addresses[baseSepolia.id];
+export const USDC_ADDRESS = USDC.addresses[baseSepolia.id] as `0x${string}`;
 export const USDC_DECIMALS = USDC.decimals;
 
 // Prediction Market Contract — deploy and update this address
