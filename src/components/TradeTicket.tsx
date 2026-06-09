@@ -22,7 +22,7 @@ export function TradeTicket({ marketId, question, options, initialPick, onPlaced
   const navigate = useNavigate();
   const [pick, setPick] = useState<string>(initialPick ?? options[0]?.name ?? "Yes");
   const [side, setSide] = useState<Side>("buy");
-  const [amount, setAmount] = useState("25");
+  const [amount, setAmount] = useState("2");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -140,19 +140,19 @@ export function TradeTicket({ marketId, question, options, initialPick, onPlaced
           <span className="text-xs text-muted-foreground">Balance ${balance.toFixed(2)}</span>
         </div>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">$</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-medium text-sm">USDC</span>
           <Input
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
-            className="pl-8 h-12 text-lg bg-secondary border-0 rounded-xl font-mono"
+            className="pl-16 h-12 text-lg bg-secondary border-0 rounded-xl font-mono"
             min={0}
             step="0.01"
           />
         </div>
         <div className="flex gap-2 mt-2">
-          {[10, 25, 100, 250].map((v) => (
+          {[1, 2, 5, 10].map((v) => (
             <button
               key={v}
               onClick={() => setAmount(String(Math.min(v, balance || v)))}
