@@ -57,6 +57,26 @@ export interface CreatorStats {
   activeMarkets: number;
 }
 
+export interface CreatorAnalytics {
+  daily: { day: string; volume: number; bets: number }[];
+  by_category: { category: string; volume: number; markets: number }[];
+  top_markets: {
+    id: string;
+    question: string;
+    category: string;
+    volume: number;
+    total_traders: number;
+    embed_views: number;
+    status: string;
+  }[];
+  totals: {
+    unique_traders: number;
+    total_bets: number;
+    avg_bet: number;
+    volume_period: number;
+  };
+}
+
 export interface EmbedConfig {
   marketId: string;
   format: "iframe" | "script" | "link";
