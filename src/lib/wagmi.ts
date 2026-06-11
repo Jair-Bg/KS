@@ -16,7 +16,7 @@ import {
 import { createConfig, http } from "wagmi";
 import { base, baseSepolia, mainnet } from "wagmi/chains";
 
-const projectId = "demo-project-id"; // WalletConnect projectId — replace for production
+const projectId = "719758bc7460e368907dc4dc5bfef8ea"; // WalletConnect Cloud projectId
 
 const connectors = connectorsForWallets(
   [
