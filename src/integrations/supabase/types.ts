@@ -305,6 +305,7 @@ export type Database = {
     }
     Functions: {
       auto_resolve_expired_markets: { Args: never; Returns: number }
+      get_creator_analytics: { Args: { p_days?: number }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
