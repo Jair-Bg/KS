@@ -216,7 +216,24 @@ export async function fetchCreatorStats(): Promise<CreatorStats> {
   };
 }
 
-// ─── Profile ────────────────────────────────────────────────────
+
+export async function fetchCreatorAnalytics(days: number = 30): Promise<CreatorAnalytics> {
+  const { data, error } = await supabase.rpc("get_creator_analytics", { p_days: days });
+  if (error) throw error;
+  const d = (data ?? {}) as Partial<CreatorAnalytics>;
+  return {
+    daily: (d.daily ?? []).map((r: any) => ({ day: r.day, volume: Number(r.volume), bets: Number(r.bets) })),
+    by_category: (d.by_category ?? []).map((r: any) => ({ category: r.category, volume: Number(r.volume), markets: Number(r.markets) })),
+    top_markets: (d.top_markets ?? []).map((r: any) => ({ ...r, volume: Number(r.volume), total_traders: Number(r.total_traders), embed_views: Number(r.embed_views) })),
+    totals: {
+      unique_traders: Number(d.totals?.unique_traders ?? 0),
+      total_bets: Number(d.totals?.total_bets ?? 0),
+      avg_bet: Number(d.totals?.avg_bet ?? 0),
+      volume_period: Number(d.totals?.volume_period ?? 0),
+    },
+  };
+}
+
 export async function getProfileBalance(): Promise<number> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return 0;
