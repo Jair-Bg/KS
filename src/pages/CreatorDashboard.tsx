@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { DollarSign, Eye, BarChart3, TrendingUp, Copy, ExternalLink, Check, Loader2, Users, Activity, Wallet } from "lucide-react";
