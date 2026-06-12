@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -31,6 +31,30 @@ const RANGES = [
   { label: "90D", days: 90 },
 ];
 
+type BetRow = {
+  id: string;
+  market_id: string;
+  user_id: string;
+  amount: number;
+  created_at: string;
+};
+
+// ─── Modern Recharts Tooltip ────────────────────────────────────
+function ChartTooltip({ active, payload, label, valueLabel = "Volume" }: any) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0];
+  return (
+    <div className="rounded-lg border border-border bg-card/95 backdrop-blur px-3 py-2 shadow-lg shadow-black/20">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">{label}</div>
+      <div className="flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full" style={{ background: p.color || "hsl(var(--primary))" }} />
+        <span className="text-sm font-semibold text-foreground">{formatVolume(Number(p.value))}</span>
+        <span className="text-[11px] text-muted-foreground">{valueLabel}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function CreatorDashboard() {
   const [stats, setStats] = useState<CreatorStats | null>(null);
   const [markets, setMarkets] = useState<Market[]>([]);
@@ -39,9 +63,23 @@ export default function CreatorDashboard() {
   const [rangeDays, setRangeDays] = useState(30);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [pulsing, setPulsing] = useState(false);
-  const reloadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const loadData = useCallback(async (days: number, isInitial: boolean) => {
+  const reconcileTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pulseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const traderIdsRef = useRef<Set<string>>(new Set());
+  // category lookup by market id, kept in sync with `markets`.
+  const marketCategoryRef = useRef<Map<string, string>>(new Map());
+
+  const triggerPulse = () => {
+    setPulsing(true);
+    if (pulseTimer.current) clearTimeout(pulseTimer.current);
+    pulseTimer.current = setTimeout(() => setPulsing(false), 1200);
+  };
+
+  // Full fetch — used on mount and range change. Subsequent live updates
+  // are applied incrementally; we only re-run the RPC as a debounced
+  // reconciliation to true-up unique-trader counts.
+  const loadAll = useCallback(async (days: number) => {
     try {
       const [s, m, a] = await Promise.all([
         fetchCreatorStats(),
@@ -50,23 +88,140 @@ export default function CreatorDashboard() {
       ]);
       setStats(s);
       setMarkets(m);
+      marketCategoryRef.current = new Map(m.map((mk) => [mk.id, mk.category]));
       setAnalytics(a);
-      if (!isInitial) {
-        setPulsing(true);
-        setTimeout(() => setPulsing(false), 1200);
-      }
+      // Reset trader-id ref — the count from the RPC is authoritative.
+      traderIdsRef.current = new Set();
     } catch (e) {
       console.error("Failed to load creator dashboard:", e);
     } finally {
-      if (isInitial) setLoading(false);
+      setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    loadData(rangeDays, true);
-  }, [rangeDays, loadData]);
+  // Reconcile via the RPC after bursts settle (debounced).
+  const scheduleReconcile = useCallback((days: number) => {
+    if (reconcileTimer.current) clearTimeout(reconcileTimer.current);
+    reconcileTimer.current = setTimeout(async () => {
+      try {
+        const a = await fetchCreatorAnalytics(days);
+        setAnalytics(a);
+        traderIdsRef.current = new Set();
+      } catch (e) {
+        console.error("Reconcile failed:", e);
+      }
+    }, 4000);
+  }, []);
 
-  // Realtime: refresh when bets land on any of the creator's markets.
+  // Apply a single new bet to local state without round-tripping.
+  const applyBetIncrement = useCallback((bet: BetRow, days: number) => {
+    const sinceMs = Date.now() - days * 86_400_000;
+    const betMs = new Date(bet.created_at).getTime();
+    const inPeriod = betMs >= sinceMs;
+    const day = bet.created_at.slice(0, 10);
+    const category = marketCategoryRef.current.get(bet.market_id) ?? "other";
+
+    // Track unique trader (approximate; reconciled by debounced RPC).
+    const newTrader = !traderIdsRef.current.has(bet.user_id);
+    traderIdsRef.current.add(bet.user_id);
+
+    // --- analytics ---
+    setAnalytics((prev) => {
+      if (!prev) return prev;
+      const next: CreatorAnalytics = {
+        ...prev,
+        daily: prev.daily.slice(),
+        by_category: prev.by_category.slice(),
+        top_markets: prev.top_markets.slice(),
+        totals: { ...prev.totals },
+      };
+
+      // daily — only mutate the affected bucket
+      if (inPeriod) {
+        const idx = next.daily.findIndex((d) => d.day === day);
+        if (idx >= 0) {
+          next.daily[idx] = {
+            ...next.daily[idx],
+            volume: next.daily[idx].volume + bet.amount,
+            bets: next.daily[idx].bets + 1,
+          };
+        } else {
+          next.daily.push({ day, volume: bet.amount, bets: 1 });
+          next.daily.sort((a, b) => (a.day < b.day ? -1 : 1));
+        }
+      }
+
+      // by_category — only the affected category
+      const cIdx = next.by_category.findIndex((c) => c.category === category);
+      if (cIdx >= 0) {
+        next.by_category[cIdx] = {
+          ...next.by_category[cIdx],
+          volume: next.by_category[cIdx].volume + bet.amount,
+        };
+        next.by_category.sort((a, b) => b.volume - a.volume);
+      }
+
+      // top_markets — only the affected market
+      const tIdx = next.top_markets.findIndex((t) => t.id === bet.market_id);
+      if (tIdx >= 0) {
+        next.top_markets[tIdx] = {
+          ...next.top_markets[tIdx],
+          volume: next.top_markets[tIdx].volume + bet.amount,
+        };
+        next.top_markets.sort((a, b) => b.volume - a.volume);
+      }
+
+      // totals
+      next.totals.total_bets += 1;
+      if (inPeriod) next.totals.volume_period += bet.amount;
+      if (newTrader) next.totals.unique_traders += 1;
+      next.totals.avg_bet =
+        next.totals.total_bets > 0
+          ? (prev.totals.avg_bet * prev.totals.total_bets + bet.amount) / next.totals.total_bets
+          : 0;
+
+      return next;
+    });
+
+    // --- markets list (only the affected market) ---
+    setMarkets((prev) =>
+      prev.map((m) =>
+        m.id === bet.market_id
+          ? { ...m, volume: Number(m.volume) + bet.amount, total_traders: m.total_traders + (newTrader ? 1 : 0) }
+          : m
+      )
+    );
+
+    // --- top KPI cards (only volume + earnings shift) ---
+    setStats((prev) => {
+      if (!prev) return prev;
+      // The stored strings are formatted; rebuild from the freshly-updated markets.
+      // We compute deltas to keep this O(1) without scanning.
+      // Total volume delta = bet.amount; earnings = 5% of volume.
+      const parse = (s: string): number => {
+        const n = parseFloat(s.replace(/[^0-9.]/g, "")) || 0;
+        if (s.includes("M")) return n * 1_000_000;
+        if (s.includes("K")) return n * 1_000;
+        return n;
+      };
+      const newVol = parse(prev.totalVolume) + bet.amount;
+      const newEarn = parse(prev.totalEarnings) + bet.amount * 0.05;
+      return {
+        ...prev,
+        totalVolume: formatVolume(newVol),
+        totalEarnings: formatVolume(newEarn),
+      };
+    });
+
+    triggerPulse();
+    scheduleReconcile(days);
+  }, [scheduleReconcile]);
+
+  useEffect(() => {
+    loadAll(rangeDays);
+  }, [rangeDays, loadAll]);
+
+  // Realtime: incrementally apply new bets on the creator's markets.
   useEffect(() => {
     let cancelled = false;
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -77,15 +232,11 @@ export default function CreatorDashboard() {
 
       const { data: mine } = await supabase
         .from("markets")
-        .select("id")
+        .select("id, category")
         .eq("creator_id", user.id);
-      const ids = new Set((mine ?? []).map((r: any) => r.id as string));
+      const idSet = new Set((mine ?? []).map((r: any) => r.id as string));
+      marketCategoryRef.current = new Map((mine ?? []).map((r: any) => [r.id, r.category]));
       if (cancelled) return;
-
-      const scheduleReload = () => {
-        if (reloadTimer.current) clearTimeout(reloadTimer.current);
-        reloadTimer.current = setTimeout(() => loadData(rangeDays, false), 600);
-      };
 
       channel = supabase
         .channel("creator-analytics")
@@ -93,14 +244,19 @@ export default function CreatorDashboard() {
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "bets" },
           (payload) => {
-            const mid = (payload.new as any)?.market_id as string | undefined;
-            if (mid && ids.has(mid)) scheduleReload();
+            const row = payload.new as any;
+            if (!row?.market_id || !idSet.has(row.market_id)) return;
+            applyBetIncrement(
+              {
+                id: row.id,
+                market_id: row.market_id,
+                user_id: row.user_id,
+                amount: Number(row.amount),
+                created_at: row.created_at,
+              },
+              rangeDays,
+            );
           }
-        )
-        .on(
-          "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "markets", filter: `creator_id=eq.${user.id}` },
-          () => scheduleReload()
         )
         .subscribe();
     }
@@ -108,11 +264,11 @@ export default function CreatorDashboard() {
 
     return () => {
       cancelled = true;
-      if (reloadTimer.current) clearTimeout(reloadTimer.current);
+      if (reconcileTimer.current) clearTimeout(reconcileTimer.current);
+      if (pulseTimer.current) clearTimeout(pulseTimer.current);
       if (channel) supabase.removeChannel(channel);
     };
-  }, [rangeDays, loadData]);
-
+  }, [rangeDays, applyBetIncrement]);
 
   const handleCopyEmbed = (marketId: string) => {
     const baseUrl = window.location.origin;
@@ -140,6 +296,19 @@ export default function CreatorDashboard() {
       ]
     : [];
 
+  const dailyData = analytics?.daily ?? [];
+  const categoryData = analytics?.by_category ?? [];
+
+  // Trend indicator on the area chart
+  const trend = useMemo(() => {
+    if (dailyData.length < 2) return 0;
+    const half = Math.floor(dailyData.length / 2);
+    const a = dailyData.slice(0, half).reduce((s, d) => s + d.volume, 0);
+    const b = dailyData.slice(half).reduce((s, d) => s + d.volume, 0);
+    if (a === 0) return b > 0 ? 100 : 0;
+    return ((b - a) / a) * 100;
+  }, [dailyData]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -151,9 +320,6 @@ export default function CreatorDashboard() {
       </div>
     );
   }
-
-  const dailyData = analytics?.daily ?? [];
-  const categoryData = analytics?.by_category ?? [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -190,7 +356,7 @@ export default function CreatorDashboard() {
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold text-foreground">Analytics</h2>
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className={`relative flex h-2 w-2`}>
+                <span className="relative flex h-2 w-2">
                   {pulsing && (
                     <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-75 animate-ping" />
                   )}
@@ -227,78 +393,123 @@ export default function CreatorDashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="bg-card rounded-xl border border-border p-5 lg:col-span-2">
-              <div className="mb-4">
-                <h3 className="text-sm font-semibold text-foreground">Volume over time</h3>
-                <p className="text-xs text-muted-foreground">Daily bet volume on your markets</p>
+            {/* Volume area chart */}
+            <div className="relative overflow-hidden bg-card rounded-2xl border border-border p-5 lg:col-span-2">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] via-transparent to-transparent pointer-events-none" />
+              <div className="relative flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Volume over time</h3>
+                  <p className="text-xs text-muted-foreground">Daily bet volume on your markets</p>
+                </div>
+                <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
+                  trend >= 0 ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+                }`}>
+                  <TrendingUp className={`w-3 h-3 ${trend < 0 ? "rotate-180" : ""}`} />
+                  {trend >= 0 ? "+" : ""}{trend.toFixed(1)}%
+                </div>
               </div>
-              <div className="h-64">
+              <div className="relative h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={dailyData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
+                  <AreaChart data={dailyData} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
                     <defs>
                       <linearGradient id="volFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                        <stop offset="60%" stopColor="hsl(var(--primary))" stopOpacity={0.12} />
                         <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                       </linearGradient>
+                      <linearGradient id="volStroke" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
+                      </linearGradient>
+                      <filter id="volGlow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="3" result="blur" />
+                        <feMerge>
+                          <feMergeNode in="blur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
                     </defs>
-                    <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />
+                    <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="2 6" vertical={false} opacity={0.6} />
                     <XAxis
                       dataKey="day"
                       tickFormatter={(v) => v.slice(5)}
                       stroke="hsl(var(--muted-foreground))"
-                      fontSize={11}
+                      fontSize={10}
                       tickLine={false}
                       axisLine={false}
+                      dy={6}
                     />
                     <YAxis
                       stroke="hsl(var(--muted-foreground))"
-                      fontSize={11}
+                      fontSize={10}
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(v) => formatVolume(Number(v))}
+                      width={48}
                     />
                     <Tooltip
-                      contentStyle={{
-                        background: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                      formatter={(v: number, n) => [n === "volume" ? formatVolume(v) : v, n === "volume" ? "Volume" : "Bets"]}
+                      content={<ChartTooltip valueLabel="Volume" />}
+                      cursor={{ stroke: "hsl(var(--primary))", strokeDasharray: "3 3", strokeOpacity: 0.5 }}
                     />
-                    <Area type="monotone" dataKey="volume" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#volFill)" />
+                    <Area
+                      type="monotone"
+                      dataKey="volume"
+                      stroke="url(#volStroke)"
+                      strokeWidth={2.5}
+                      fill="url(#volFill)"
+                      filter="url(#volGlow)"
+                      activeDot={{ r: 5, fill: "hsl(var(--primary))", stroke: "hsl(var(--card))", strokeWidth: 2 }}
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            <div className="bg-card rounded-xl border border-border p-5">
-              <div className="mb-4">
+            {/* Category bars */}
+            <div className="relative overflow-hidden bg-card rounded-2xl border border-border p-5">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] via-transparent to-transparent pointer-events-none" />
+              <div className="relative mb-4">
                 <h3 className="text-sm font-semibold text-foreground">Volume by category</h3>
                 <p className="text-xs text-muted-foreground">Across all your markets</p>
               </div>
-              <div className="h-64">
+              <div className="relative h-72">
                 {categoryData.length === 0 ? (
                   <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
                     No data yet
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={categoryData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
-                      <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />
-                      <XAxis dataKey="category" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => formatVolume(Number(v))} />
-                      <Tooltip
-                        contentStyle={{
-                          background: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: 8,
-                          fontSize: 12,
-                        }}
-                        formatter={(v: number) => [formatVolume(v), "Volume"]}
-                        cursor={{ fill: "hsl(var(--muted) / 0.3)" }}
+                    <BarChart data={categoryData} layout="vertical" margin={{ top: 4, right: 12, left: 4, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="barFill" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.85} />
+                          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="2 6" horizontal={false} opacity={0.6} />
+                      <XAxis
+                        type="number"
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(v) => formatVolume(Number(v))}
                       />
-                      <Bar dataKey="volume" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                      <YAxis
+                        type="category"
+                        dataKey="category"
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={11}
+                        tickLine={false}
+                        axisLine={false}
+                        width={80}
+                        tickFormatter={(v) => String(v).charAt(0).toUpperCase() + String(v).slice(1)}
+                      />
+                      <Tooltip
+                        content={<ChartTooltip valueLabel="Volume" />}
+                        cursor={{ fill: "hsl(var(--primary) / 0.08)" }}
+                      />
+                      <Bar dataKey="volume" fill="url(#barFill)" radius={[0, 8, 8, 0]} barSize={18} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
@@ -361,4 +572,3 @@ export default function CreatorDashboard() {
     </div>
   );
 }
-
