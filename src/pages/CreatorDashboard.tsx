@@ -187,7 +187,18 @@ export default function CreatorDashboard() {
         {/* Analytics */}
         <section className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">Analytics</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-foreground">Analytics</h2>
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className={`relative flex h-2 w-2`}>
+                  {pulsing && (
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-success opacity-75 animate-ping" />
+                  )}
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
+                </span>
+                Live
+              </span>
+            </div>
             <div className="flex items-center gap-1 bg-card border border-border rounded-full p-1">
               {RANGES.map((r) => (
                 <button
