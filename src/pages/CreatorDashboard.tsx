@@ -38,31 +38,81 @@ export default function CreatorDashboard() {
   const [loading, setLoading] = useState(true);
   const [rangeDays, setRangeDays] = useState(30);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [pulsing, setPulsing] = useState(false);
+  const reloadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const loadData = useCallback(async (days: number, isInitial: boolean) => {
+    try {
+      const [s, m, a] = await Promise.all([
+        fetchCreatorStats(),
+        fetchCreatorMarkets(),
+        fetchCreatorAnalytics(days),
+      ]);
+      setStats(s);
+      setMarkets(m);
+      setAnalytics(a);
+      if (!isInitial) {
+        setPulsing(true);
+        setTimeout(() => setPulsing(false), 1200);
+      }
+    } catch (e) {
+      console.error("Failed to load creator dashboard:", e);
+    } finally {
+      if (isInitial) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
+    loadData(rangeDays, true);
+  }, [rangeDays, loadData]);
+
+  // Realtime: refresh when bets land on any of the creator's markets.
+  useEffect(() => {
     let cancelled = false;
-    async function load() {
-      try {
-        const [s, m, a] = await Promise.all([
-          fetchCreatorStats(),
-          fetchCreatorMarkets(),
-          fetchCreatorAnalytics(rangeDays),
-        ]);
-        if (cancelled) return;
-        setStats(s);
-        setMarkets(m);
-        setAnalytics(a);
-      } catch (e) {
-        console.error("Failed to load creator dashboard:", e);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    async function setup() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+
+      const { data: mine } = await supabase
+        .from("markets")
+        .select("id")
+        .eq("creator_id", user.id);
+      const ids = new Set((mine ?? []).map((r: any) => r.id as string));
+      if (cancelled) return;
+
+      const scheduleReload = () => {
+        if (reloadTimer.current) clearTimeout(reloadTimer.current);
+        reloadTimer.current = setTimeout(() => loadData(rangeDays, false), 600);
+      };
+
+      channel = supabase
+        .channel("creator-analytics")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "bets" },
+          (payload) => {
+            const mid = (payload.new as any)?.market_id as string | undefined;
+            if (mid && ids.has(mid)) scheduleReload();
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "markets", filter: `creator_id=eq.${user.id}` },
+          () => scheduleReload()
+        )
+        .subscribe();
     }
-    load();
+    setup();
+
     return () => {
       cancelled = true;
+      if (reloadTimer.current) clearTimeout(reloadTimer.current);
+      if (channel) supabase.removeChannel(channel);
     };
-  }, [rangeDays]);
+  }, [rangeDays, loadData]);
+
 
   const handleCopyEmbed = (marketId: string) => {
     const baseUrl = window.location.origin;
