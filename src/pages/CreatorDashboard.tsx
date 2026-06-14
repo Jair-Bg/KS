@@ -417,43 +417,83 @@ export default function CreatorDashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Volume area chart */}
-            <div className="relative overflow-hidden bg-card rounded-2xl border border-border p-5 lg:col-span-2">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] via-transparent to-transparent pointer-events-none" />
-              <div className="relative flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">Volume over time</h3>
-                  <p className="text-xs text-muted-foreground">Daily bet volume on your markets</p>
-                </div>
-                <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
-                  trend >= 0 ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
-                }`}>
-                  <TrendingUp className={`w-3 h-3 ${trend < 0 ? "rotate-180" : ""}`} />
-                  {trend >= 0 ? "+" : ""}{trend.toFixed(1)}%
+            {/* ── Stock-style price + volume chart ─────────────────── */}
+            <div className="relative overflow-hidden bg-card rounded-2xl border border-border lg:col-span-2">
+              <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.06] via-transparent to-transparent pointer-events-none" />
+              {/* Ticker header */}
+              <div className="relative px-5 pt-5 pb-3 border-b border-border/60">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary/10 border border-primary/20">
+                      <span className="text-[10px] font-mono font-bold tracking-wider text-primary">$VOL</span>
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Total Volume · {rangeDays}D</div>
+                      <div className="flex items-baseline gap-2 mt-0.5">
+                        <span className="text-2xl font-bold font-mono tabular-nums text-foreground">
+                          {formatVolume(analytics?.totals.volume_period ?? 0)}
+                        </span>
+                        <span className={`text-sm font-mono font-semibold tabular-nums ${
+                          trend >= 0 ? "text-success" : "text-destructive"
+                        }`}>
+                          {trend >= 0 ? "▲" : "▼"} {Math.abs(trend).toFixed(2)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* OHLC-style stat strip */}
+                  <div className="flex items-center gap-4 font-mono text-[11px]">
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground">High</span>
+                      <span className="text-foreground tabular-nums font-semibold">
+                        {formatVolume(Math.max(0, ...dailyData.map(d => d.volume)))}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Low</span>
+                      <span className="text-foreground tabular-nums font-semibold">
+                        {formatVolume(dailyData.length ? Math.min(...dailyData.map(d => d.volume)) : 0)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Avg</span>
+                      <span className="text-foreground tabular-nums font-semibold">
+                        {formatVolume(dailyData.length ? dailyData.reduce((s, d) => s + d.volume, 0) / dailyData.length : 0)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Bets</span>
+                      <span className="text-foreground tabular-nums font-semibold">
+                        {dailyData.reduce((s, d) => s + d.bets, 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="relative h-72">
+
+              {/* Combined price + volume chart */}
+              <div className="relative h-80 p-3 pr-5">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={dailyData} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+                  <ComposedChart data={dailyData} margin={{ top: 12, right: 8, left: -4, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="volFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
-                        <stop offset="60%" stopColor="hsl(var(--primary))" stopOpacity={0.12} />
+                      <linearGradient id="priceFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
+                        <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity={0.12} />
                         <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                       </linearGradient>
-                      <linearGradient id="volStroke" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" />
-                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
+                      <linearGradient id="volBar" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
                       </linearGradient>
-                      <filter id="volGlow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur stdDeviation="3" result="blur" />
+                      <filter id="lineGlow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="2.5" result="blur" />
                         <feMerge>
                           <feMergeNode in="blur" />
                           <feMergeNode in="SourceGraphic" />
                         </feMerge>
                       </filter>
                     </defs>
-                    <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="2 6" vertical={false} opacity={0.6} />
+                    <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="1 4" vertical={false} opacity={0.5} />
                     <XAxis
                       dataKey="day"
                       tickFormatter={(v) => v.slice(5)}
@@ -462,80 +502,116 @@ export default function CreatorDashboard() {
                       tickLine={false}
                       axisLine={false}
                       dy={6}
+                      minTickGap={20}
                     />
+                    {/* Price axis (right side, like real trading charts) */}
                     <YAxis
+                      yAxisId="price"
+                      orientation="right"
                       stroke="hsl(var(--muted-foreground))"
                       fontSize={10}
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(v) => formatVolume(Number(v))}
-                      width={48}
+                      width={50}
+                    />
+                    {/* Volume axis (hidden, scaled smaller) */}
+                    <YAxis
+                      yAxisId="vol"
+                      orientation="left"
+                      hide
+                      domain={[0, (dataMax: number) => dataMax * 4]}
                     />
                     <Tooltip
-                      content={<ChartTooltip valueLabel="Volume" />}
-                      cursor={{ stroke: "hsl(var(--primary))", strokeDasharray: "3 3", strokeOpacity: 0.5 }}
+                      content={<ChartTooltip />}
+                      cursor={{ stroke: "hsl(var(--primary))", strokeDasharray: "2 4", strokeOpacity: 0.7, strokeWidth: 1 }}
                     />
+                    {/* Volume bars at bottom */}
+                    <Bar
+                      yAxisId="vol"
+                      dataKey="bets"
+                      fill="url(#volBar)"
+                      radius={[2, 2, 0, 0]}
+                      maxBarSize={14}
+                    />
+                    {/* Price area */}
                     <Area
+                      yAxisId="price"
                       type="monotone"
                       dataKey="volume"
-                      stroke="url(#volStroke)"
-                      strokeWidth={2.5}
-                      fill="url(#volFill)"
-                      filter="url(#volGlow)"
-                      activeDot={{ r: 5, fill: "hsl(var(--primary))", stroke: "hsl(var(--card))", strokeWidth: 2 }}
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      fill="url(#priceFill)"
+                      filter="url(#lineGlow)"
+                      activeDot={{ r: 4, fill: "hsl(var(--primary))", stroke: "hsl(var(--card))", strokeWidth: 2 }}
                     />
-                  </AreaChart>
+                    {/* Reference line at average */}
+                    {dailyData.length > 0 && (
+                      <ReferenceLine
+                        yAxisId="price"
+                        y={dailyData.reduce((s, d) => s + d.volume, 0) / dailyData.length}
+                        stroke="hsl(var(--muted-foreground))"
+                        strokeDasharray="2 4"
+                        strokeOpacity={0.4}
+                      />
+                    )}
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            {/* Category bars */}
-            <div className="relative overflow-hidden bg-card rounded-2xl border border-border p-5">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] via-transparent to-transparent pointer-events-none" />
-              <div className="relative mb-4">
-                <h3 className="text-sm font-semibold text-foreground">Volume by category</h3>
-                <p className="text-xs text-muted-foreground">Across all your markets</p>
+            {/* ── Sector breakdown (stock-style) ───────────────────── */}
+            <div className="relative overflow-hidden bg-card rounded-2xl border border-border">
+              <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.06] via-transparent to-transparent pointer-events-none" />
+              <div className="relative px-5 pt-5 pb-3 border-b border-border/60">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Sectors</div>
+                    <h3 className="text-sm font-semibold text-foreground mt-0.5">Volume by category</h3>
+                  </div>
+                  <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
+                    {categoryData.length} {categoryData.length === 1 ? "sector" : "sectors"}
+                  </span>
+                </div>
               </div>
-              <div className="relative h-72">
+              <div className="relative p-4 h-[19.5rem] overflow-y-auto">
                 {categoryData.length === 0 ? (
                   <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
-                    No data yet
+                    No sector data yet
                   </div>
                 ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={categoryData} layout="vertical" margin={{ top: 4, right: 12, left: 4, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="barFill" x1="0" y1="0" x2="1" y2="0">
-                          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.85} />
-                          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="2 6" horizontal={false} opacity={0.6} />
-                      <XAxis
-                        type="number"
-                        stroke="hsl(var(--muted-foreground))"
-                        fontSize={10}
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={(v) => formatVolume(Number(v))}
-                      />
-                      <YAxis
-                        type="category"
-                        dataKey="category"
-                        stroke="hsl(var(--muted-foreground))"
-                        fontSize={11}
-                        tickLine={false}
-                        axisLine={false}
-                        width={80}
-                        tickFormatter={(v) => String(v).charAt(0).toUpperCase() + String(v).slice(1)}
-                      />
-                      <Tooltip
-                        content={<ChartTooltip valueLabel="Volume" />}
-                        cursor={{ fill: "hsl(var(--primary) / 0.08)" }}
-                      />
-                      <Bar dataKey="volume" fill="url(#barFill)" radius={[0, 8, 8, 0]} barSize={18} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <div className="space-y-2.5">
+                    {(() => {
+                      const total = categoryData.reduce((s, c) => s + c.volume, 0) || 1;
+                      const max = Math.max(...categoryData.map((c) => c.volume), 1);
+                      return categoryData.map((c) => {
+                        const pct = (c.volume / total) * 100;
+                        const widthPct = (c.volume / max) * 100;
+                        return (
+                          <div key={c.category} className="group">
+                            <div className="flex items-center justify-between mb-1 font-mono text-[11px]">
+                              <span className="uppercase tracking-wider text-foreground font-semibold">
+                                {c.category}
+                              </span>
+                              <div className="flex items-center gap-2 tabular-nums">
+                                <span className="text-muted-foreground">{pct.toFixed(1)}%</span>
+                                <span className="text-foreground font-semibold w-14 text-right">
+                                  {formatVolume(c.volume)}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="relative h-2 rounded-sm bg-secondary/60 overflow-hidden">
+                              <div
+                                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/50 rounded-sm transition-all duration-500 group-hover:from-primary group-hover:to-primary/70"
+                                style={{ width: `${widthPct}%` }}
+                              />
+                              <div className="absolute inset-y-0 left-0 bg-primary/20 blur-sm" style={{ width: `${widthPct}%` }} />
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
                 )}
               </div>
             </div>
