@@ -40,17 +40,40 @@ type BetRow = {
   created_at: string;
 };
 
-// ─── Modern Recharts Tooltip ────────────────────────────────────
-function ChartTooltip({ active, payload, label, valueLabel = "Volume" }: any) {
+// ─── Modern Stock-Market Style Tooltip ──────────────────────────
+function ChartTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  const vol = payload.find((p: any) => p.dataKey === "volume")?.value;
+  const bets = payload.find((p: any) => p.dataKey === "bets")?.value;
+  return (
+    <div className="rounded-md border border-border bg-card/95 backdrop-blur-md px-3 py-2 shadow-xl shadow-black/30 font-mono">
+      <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mb-1">{label}</div>
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          <span className="w-1 h-3 rounded-sm bg-primary" />
+          <span className="text-xs text-muted-foreground">VOL</span>
+          <span className="text-sm font-semibold text-foreground tabular-nums">{formatVolume(Number(vol ?? 0))}</span>
+        </div>
+        {bets !== undefined && (
+          <div className="flex items-center gap-1.5 border-l border-border pl-3">
+            <span className="text-xs text-muted-foreground">BETS</span>
+            <span className="text-sm font-semibold text-foreground tabular-nums">{Number(bets)}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CategoryTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   const p = payload[0];
   return (
-    <div className="rounded-lg border border-border bg-card/95 backdrop-blur px-3 py-2 shadow-lg shadow-black/20">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">{label}</div>
+    <div className="rounded-md border border-border bg-card/95 backdrop-blur-md px-3 py-2 shadow-xl shadow-black/30 font-mono">
+      <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mb-1">{label}</div>
       <div className="flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full" style={{ background: p.color || "hsl(var(--primary))" }} />
-        <span className="text-sm font-semibold text-foreground">{formatVolume(Number(p.value))}</span>
-        <span className="text-[11px] text-muted-foreground">{valueLabel}</span>
+        <span className="w-2 h-2 rounded-full bg-primary" />
+        <span className="text-sm font-semibold text-foreground tabular-nums">{formatVolume(Number(p.value))}</span>
       </div>
     </div>
   );
