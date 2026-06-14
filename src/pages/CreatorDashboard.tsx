@@ -15,14 +15,15 @@ import {
 } from "@/lib/api";
 import {
   ResponsiveContainer,
-  AreaChart,
+  ComposedChart,
   Area,
-  BarChart,
   Bar,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
   CartesianGrid,
+  ReferenceLine,
 } from "recharts";
 
 const RANGES = [
