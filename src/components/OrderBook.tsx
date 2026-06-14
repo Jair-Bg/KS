@@ -17,9 +17,9 @@ interface TradeRow {
   created_at: string;
 }
 
+type Tab = "book" | "depth" | "trades";
+
 // Synthesize an order-book ladder from the current odds + market volume.
-// Real markets stream this from a matching engine; for a demo prediction market
-// we approximate depth so the UI feels alive and informative.
 function buildLadder(midYes: number, volume: number) {
   const baseDepth = Math.max(80, Math.round(volume / 40));
   const levels = 6;
@@ -35,20 +35,38 @@ function buildLadder(midYes: number, volume: number) {
   return { asks: asks.reverse(), bids };
 }
 
+// Bucket real bets into 5¢ price levels and aggregate buy (YES) / sell (NO) volume.
+const BUCKET = 5;
+type DepthLevel = { price: number; buy: number; sell: number };
+
+function aggregateDepth(rows: TradeRow[]): DepthLevel[] {
+  const map = new Map<number, DepthLevel>();
+  for (const r of rows) {
+    const raw = Math.max(1, Math.min(99, Math.round(Number(r.odds_at_time))));
+    const bucket = Math.max(BUCKET, Math.min(95, Math.round(raw / BUCKET) * BUCKET));
+    const cur = map.get(bucket) ?? { price: bucket, buy: 0, sell: 0 };
+    if (r.option.toLowerCase() === "yes") cur.buy += Number(r.amount);
+    else cur.sell += Number(r.amount);
+    map.set(bucket, cur);
+  }
+  return Array.from(map.values()).sort((a, b) => b.price - a.price);
+}
+
 export function OrderBook({ marketId, yesOdds, noOdds, volume }: OrderBookProps) {
-  const [tab, setTab] = useState<"book" | "trades">("book");
+  const [tab, setTab] = useState<Tab>("book");
   const [trades, setTrades] = useState<TradeRow[]>([]);
+  const [allBets, setAllBets] = useState<TradeRow[]>([]);
 
   const ladder = useMemo(
     () => buildLadder(Math.round(yesOdds), volume),
-    // re-roll only when mid moves meaningfully
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [Math.round(yesOdds), Math.round(volume / 1000)],
   );
 
+  // Recent trades feed
   useEffect(() => {
     let cancelled = false;
-    const load = async () => {
+    (async () => {
       const { data } = await supabase
         .from("bets")
         .select("id, option, amount, odds_at_time, created_at")
@@ -56,8 +74,7 @@ export function OrderBook({ marketId, yesOdds, noOdds, volume }: OrderBookProps)
         .order("created_at", { ascending: false })
         .limit(15);
       if (!cancelled) setTrades((data ?? []) as TradeRow[]);
-    };
-    load();
+    })();
 
     const channel = supabase
       .channel(`trades-${marketId}`)
@@ -65,7 +82,9 @@ export function OrderBook({ marketId, yesOdds, noOdds, volume }: OrderBookProps)
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "bets", filter: `market_id=eq.${marketId}` },
         (payload: any) => {
-          setTrades((prev) => [payload.new as TradeRow, ...prev].slice(0, 15));
+          const row = payload.new as TradeRow;
+          setTrades((prev) => [row, ...prev].slice(0, 15));
+          setAllBets((prev) => [row, ...prev]);
         },
       )
       .subscribe();
@@ -76,53 +95,70 @@ export function OrderBook({ marketId, yesOdds, noOdds, volume }: OrderBookProps)
     };
   }, [marketId]);
 
+  // Full bet history for depth aggregation
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("bets")
+        .select("id, option, amount, odds_at_time, created_at")
+        .eq("market_id", marketId)
+        .order("created_at", { ascending: false })
+        .limit(2000);
+      if (!cancelled) setAllBets((data ?? []) as TradeRow[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [marketId]);
+
+  const depth = useMemo(() => aggregateDepth(allBets), [allBets]);
+  const depthTotals = useMemo(() => {
+    let buy = 0, sell = 0;
+    for (const d of depth) { buy += d.buy; sell += d.sell; }
+    return { buy, sell, total: buy + sell };
+  }, [depth]);
+  const maxSide = Math.max(1, ...depth.map((d) => Math.max(d.buy, d.sell)));
+
   const maxSize = Math.max(...ladder.asks.map((a) => a.size), ...ladder.bids.map((b) => b.size), 1);
   const spread = (ladder.asks[ladder.asks.length - 1]?.price ?? yesOdds) - (ladder.bids[0]?.price ?? yesOdds);
+
+  const Tab = ({ id, label }: { id: Tab; label: string }) => (
+    <button
+      onClick={() => setTab(id)}
+      className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+        tab === id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
+      }`}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div className="bg-card border border-border rounded-2xl overflow-hidden">
       <div className="flex items-center justify-between px-4 sm:px-5 pt-4">
         <h2 className="font-semibold text-foreground">Order book</h2>
         <div className="flex bg-secondary/60 rounded-lg p-0.5 text-xs">
-          <button
-            onClick={() => setTab("book")}
-            className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-              tab === "book" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
-            }`}
-          >
-            Depth
-          </button>
-          <button
-            onClick={() => setTab("trades")}
-            className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-              tab === "trades" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
-            }`}
-          >
-            Trades
-          </button>
+          <Tab id="book" label="Book" />
+          <Tab id="depth" label="Depth" />
+          <Tab id="trades" label="Trades" />
         </div>
       </div>
 
-      {tab === "book" ? (
+      {tab === "book" && (
         <div className="p-4 sm:p-5 pt-3">
           <div className="grid grid-cols-3 text-[11px] uppercase tracking-wider text-muted-foreground pb-2 border-b border-border/60">
             <span>Price (YES ¢)</span>
             <span className="text-right">Size</span>
             <span className="text-right">Total</span>
           </div>
-
-          {/* Asks (sells / NO side, sorted high→low so best ask sits at bottom) */}
           <div className="divide-y divide-border/40">
             {ladder.asks.map((a, i) => {
               const pct = (a.size / maxSize) * 100;
               const total = ladder.asks.slice(i).reduce((s, x) => s + x.size, 0);
               return (
                 <div key={`a-${i}`} className="relative grid grid-cols-3 py-1.5 text-sm font-mono">
-                  <span
-                    className="absolute inset-y-0 right-0 bg-destructive/10"
-                    style={{ width: `${pct}%` }}
-                    aria-hidden
-                  />
+                  <span className="absolute inset-y-0 right-0 bg-destructive/10" style={{ width: `${pct}%` }} aria-hidden />
                   <span className="relative text-destructive">{a.price}¢</span>
                   <span className="relative text-right text-foreground">{a.size.toLocaleString()}</span>
                   <span className="relative text-right text-muted-foreground">{total.toLocaleString()}</span>
@@ -130,25 +166,18 @@ export function OrderBook({ marketId, yesOdds, noOdds, volume }: OrderBookProps)
               );
             })}
           </div>
-
           <div className="flex items-center justify-between py-2 my-1 px-1 bg-secondary/40 rounded-md text-xs">
             <span className="text-muted-foreground">Mid</span>
             <span className="font-semibold text-foreground">{Math.round(yesOdds)}¢ YES · {Math.round(noOdds)}¢ NO</span>
             <span className="text-muted-foreground">Spread {Math.max(spread, 1)}¢</span>
           </div>
-
-          {/* Bids */}
           <div className="divide-y divide-border/40">
             {ladder.bids.map((b, i) => {
               const pct = (b.size / maxSize) * 100;
               const total = ladder.bids.slice(0, i + 1).reduce((s, x) => s + x.size, 0);
               return (
                 <div key={`b-${i}`} className="relative grid grid-cols-3 py-1.5 text-sm font-mono">
-                  <span
-                    className="absolute inset-y-0 right-0 bg-primary/10"
-                    style={{ width: `${pct}%` }}
-                    aria-hidden
-                  />
+                  <span className="absolute inset-y-0 right-0 bg-primary/10" style={{ width: `${pct}%` }} aria-hidden />
                   <span className="relative text-primary">{b.price}¢</span>
                   <span className="relative text-right text-foreground">{b.size.toLocaleString()}</span>
                   <span className="relative text-right text-muted-foreground">{total.toLocaleString()}</span>
@@ -157,7 +186,92 @@ export function OrderBook({ marketId, yesOdds, noOdds, volume }: OrderBookProps)
             })}
           </div>
         </div>
-      ) : (
+      )}
+
+      {tab === "depth" && (
+        <div className="p-4 sm:p-5 pt-3">
+          {/* Summary header */}
+          <div className="flex items-center justify-between mb-3 text-[11px] font-mono">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-sm bg-primary" />
+              <span className="text-muted-foreground uppercase tracking-wider">Buy YES</span>
+              <span className="text-primary font-semibold tabular-nums">${depthTotals.buy.toFixed(0)}</span>
+            </div>
+            <span className="text-muted-foreground tabular-nums">
+              {depthTotals.total > 0
+                ? `${Math.round((depthTotals.buy / depthTotals.total) * 100)}% / ${Math.round((depthTotals.sell / depthTotals.total) * 100)}%`
+                : "—"}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-destructive font-semibold tabular-nums">${depthTotals.sell.toFixed(0)}</span>
+              <span className="text-muted-foreground uppercase tracking-wider">Sell NO</span>
+              <span className="w-2 h-2 rounded-sm bg-destructive" />
+            </div>
+          </div>
+
+          {/* Column headers */}
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground pb-2 border-b border-border/60">
+            <span className="text-right">Sell volume</span>
+            <span className="text-center w-12">Price</span>
+            <span>Buy volume</span>
+          </div>
+
+          {depth.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">No depth yet — be the first to trade.</p>
+          ) : (
+            <div className="divide-y divide-border/40">
+              {depth.map((d) => {
+                const buyPct = (d.buy / maxSide) * 100;
+                const sellPct = (d.sell / maxSide) * 100;
+                const isMid = Math.abs(d.price - Math.round(yesOdds)) < BUCKET;
+                return (
+                  <div
+                    key={d.price}
+                    className={`grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-1.5 text-xs font-mono ${
+                      isMid ? "bg-primary/5" : ""
+                    }`}
+                  >
+                    {/* Sell side (left, fills right→left) */}
+                    <div className="relative h-5 flex items-center justify-end pr-2">
+                      <span
+                        className="absolute inset-y-0 right-0 bg-destructive/15 rounded-l-sm"
+                        style={{ width: `${sellPct}%` }}
+                        aria-hidden
+                      />
+                      <span className={`relative tabular-nums ${d.sell > 0 ? "text-foreground" : "text-muted-foreground/60"}`}>
+                        {d.sell > 0 ? `$${d.sell.toFixed(0)}` : "—"}
+                      </span>
+                    </div>
+                    {/* Price (centered) */}
+                    <span className={`w-12 text-center font-semibold tabular-nums ${
+                      isMid ? "text-foreground" : "text-muted-foreground"
+                    }`}>
+                      {d.price}¢
+                    </span>
+                    {/* Buy side (right, fills left→right) */}
+                    <div className="relative h-5 flex items-center pl-2">
+                      <span
+                        className="absolute inset-y-0 left-0 bg-primary/15 rounded-r-sm"
+                        style={{ width: `${buyPct}%` }}
+                        aria-hidden
+                      />
+                      <span className={`relative tabular-nums ${d.buy > 0 ? "text-foreground" : "text-muted-foreground/60"}`}>
+                        {d.buy > 0 ? `$${d.buy.toFixed(0)}` : "—"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <p className="mt-3 text-[10px] text-muted-foreground/70 text-center">
+            Aggregated from {allBets.length} trade{allBets.length === 1 ? "" : "s"} · {BUCKET}¢ price buckets
+          </p>
+        </div>
+      )}
+
+      {tab === "trades" && (
         <div className="p-4 sm:p-5 pt-3">
           {trades.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">No trades yet — be the first.</p>
@@ -173,11 +287,7 @@ export function OrderBook({ marketId, yesOdds, noOdds, volume }: OrderBookProps)
                 const isYes = t.option.toLowerCase() === "yes";
                 return (
                   <div key={t.id} className="grid grid-cols-4 py-2 text-sm items-center">
-                    <span
-                      className={`inline-flex items-center gap-1 font-medium ${
-                        isYes ? "text-primary" : "text-destructive"
-                      }`}
-                    >
+                    <span className={`inline-flex items-center gap-1 font-medium ${isYes ? "text-primary" : "text-destructive"}`}>
                       {isYes ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
                       {t.option}
                     </span>
