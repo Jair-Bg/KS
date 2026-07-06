@@ -15,6 +15,7 @@ interface MarketDraft {
   end_date: string;
   category: string;
   options: string[];
+  engine: "amm" | "clob";
 }
 
 export default function CreateMarket() {
