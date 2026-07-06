@@ -36,6 +36,7 @@ export default function CreateMarket() {
       end_date: "2025-12-31",
       category,
       options: ["Option A", "Option B", "Option C"],
+      engine: "amm",
     });
     setStep("refine");
   };
