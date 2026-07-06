@@ -21,6 +21,11 @@ export default function MarketDetail() {
   const [loading, setLoading] = useState(true);
   const [initialPick, setInitialPick] = useState<string | undefined>(undefined);
   const [chartKey, setChartKey] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
 
   const load = useCallback(async () => {
     if (!id) return;
