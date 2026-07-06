@@ -19,7 +19,52 @@ export interface Market {
   end_date: string;
   created_at: string;
   updated_at: string;
+  engine?: "amm" | "clob";
   options?: MarketOptionRow[];
+}
+
+// ─── CLOB Types ─────────────────────────────────────────────────
+export interface OrderRow {
+  id: string;
+  market_id: string;
+  user_id: string;
+  side: "BUY" | "SELL";
+  contract: "YES" | "NO";
+  price: number;
+  quantity: number;
+  filled: number;
+  status: "open" | "filled" | "cancelled";
+  is_mm: boolean;
+  created_at: string;
+}
+export interface TradeRow {
+  id: string;
+  market_id: string;
+  contract: string | null;
+  price: number;
+  quantity: number;
+  mint: boolean;
+  created_at: string;
+}
+export interface PositionRow {
+  user_id: string;
+  market_id: string;
+  yes_qty: number;
+  no_qty: number;
+}
+export interface MMQuoteResponse {
+  event_id: string;
+  timestamp: number;
+  mid: number;
+  spread: number;
+  skew: number;
+  market_maker_orders: Array<{
+    side: "BUY" | "SELL";
+    contract: "YES" | "NO";
+    order_type: "LIMIT";
+    price: number;
+    quantity_contracts: number;
+  }>;
 }
 
 export interface MarketOptionRow {
@@ -139,6 +184,7 @@ export async function createMarket(payload: {
   market_type?: string;
   end_date: string;
   options?: string[];
+  engine?: "amm" | "clob";
 }): Promise<Market> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("You must be signed in to create a market");
@@ -153,12 +199,113 @@ export async function createMarket(payload: {
       end_date: payload.end_date,
       yes_odds: 50,
       no_odds: 50,
-    })
+      engine: payload.engine ?? "amm",
+    } as any)
     .select()
     .single();
   if (error) throw error;
   return data as Market;
 }
+
+// ─── CLOB ───────────────────────────────────────────────────────
+export async function placeLimitOrder(payload: {
+  marketId: string;
+  side: "BUY" | "SELL";
+  contract: "YES" | "NO";
+  price: number;
+  quantity: number;
+}): Promise<{ order_id: string }> {
+  const { data, error } = await supabase.rpc("place_limit_order", {
+    p_market_id: payload.marketId,
+    p_side: payload.side,
+    p_contract: payload.contract,
+    p_price: payload.price,
+    p_quantity: payload.quantity,
+  } as any);
+  if (error) throw error;
+  return data as any;
+}
+
+export async function cancelOrder(orderId: string): Promise<void> {
+  const { error } = await supabase.rpc("cancel_order", { p_order_id: orderId } as any);
+  if (error) throw error;
+}
+
+export async function fetchOrderBook(marketId: string): Promise<OrderRow[]> {
+  const { data, error } = await supabase
+    .from("orders" as any)
+    .select("*")
+    .eq("market_id", marketId)
+    .eq("status", "open")
+    .order("price", { ascending: false })
+    .limit(500);
+  if (error) throw error;
+  return (data ?? []) as unknown as OrderRow[];
+}
+
+export async function fetchMyOrders(marketId: string): Promise<OrderRow[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data, error } = await supabase
+    .from("orders" as any)
+    .select("*")
+    .eq("market_id", marketId)
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as OrderRow[];
+}
+
+export async function fetchMyPosition(marketId: string): Promise<PositionRow | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await supabase
+    .from("positions" as any)
+    .select("*")
+    .eq("market_id", marketId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as any) ?? null;
+}
+
+export async function fetchRecentTrades(marketId: string, limit = 30): Promise<TradeRow[]> {
+  const { data, error } = await supabase
+    .from("trades" as any)
+    .select("*")
+    .eq("market_id", marketId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []) as unknown as TradeRow[];
+}
+
+export async function mmGenerateQuotes(payload: {
+  marketId: string;
+  pModel: number;
+  confidence: "high" | "low";
+  quantity?: number;
+}): Promise<MMQuoteResponse> {
+  const { data, error } = await supabase.rpc("mm_generate_quotes", {
+    p_market_id: payload.marketId,
+    p_model: payload.pModel,
+    p_confidence: payload.confidence,
+    p_quantity: payload.quantity ?? 1000,
+  } as any);
+  if (error) throw error;
+  return data as unknown as MMQuoteResponse;
+}
+
+export async function fetchMMInventory(marketId: string): Promise<{ yes_qty: number; no_qty: number; target_notional: number } | null> {
+  const { data, error } = await supabase
+    .from("mm_inventory" as any)
+    .select("yes_qty,no_qty,target_notional")
+    .eq("market_id", marketId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as any) ?? null;
+}
+
 
 // ─── Bets ───────────────────────────────────────────────────────
 export async function placeBet(payload: {

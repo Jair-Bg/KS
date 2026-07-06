@@ -108,6 +108,7 @@ export type Database = {
           description: string | null
           embed_views: number
           end_date: string
+          engine: string
           id: string
           market_type: string
           no_odds: number
@@ -126,6 +127,7 @@ export type Database = {
           description?: string | null
           embed_views?: number
           end_date: string
+          engine?: string
           id?: string
           market_type?: string
           no_odds?: number
@@ -144,6 +146,7 @@ export type Database = {
           description?: string | null
           embed_views?: number
           end_date?: string
+          engine?: string
           id?: string
           market_type?: string
           no_odds?: number
@@ -156,6 +159,38 @@ export type Database = {
           yes_odds?: number
         }
         Relationships: []
+      }
+      mm_inventory: {
+        Row: {
+          market_id: string
+          no_qty: number
+          target_notional: number
+          updated_at: string
+          yes_qty: number
+        }
+        Insert: {
+          market_id: string
+          no_qty?: number
+          target_notional?: number
+          updated_at?: string
+          yes_qty?: number
+        }
+        Update: {
+          market_id?: string
+          no_qty?: number
+          target_notional?: number
+          updated_at?: string
+          yes_qty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mm_inventory_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: true
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       odds_history: {
         Row: {
@@ -182,6 +217,97 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "odds_history_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          contract: string
+          created_at: string
+          filled: number
+          id: string
+          is_mm: boolean
+          market_id: string
+          price: number
+          quantity: number
+          side: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contract: string
+          created_at?: string
+          filled?: number
+          id?: string
+          is_mm?: boolean
+          market_id: string
+          price: number
+          quantity: number
+          side: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contract?: string
+          created_at?: string
+          filled?: number
+          id?: string
+          is_mm?: boolean
+          market_id?: string
+          price?: number
+          quantity?: number
+          side?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      positions: {
+        Row: {
+          created_at: string
+          id: string
+          market_id: string
+          no_qty: number
+          updated_at: string
+          user_id: string
+          yes_qty: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          market_id: string
+          no_qty?: number
+          updated_at?: string
+          user_id: string
+          yes_qty?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          market_id?: string
+          no_qty?: number
+          updated_at?: string
+          user_id?: string
+          yes_qty?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "positions_market_id_fkey"
             columns: ["market_id"]
             isOneToOne: false
             referencedRelation: "markets"
@@ -230,6 +356,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      trades: {
+        Row: {
+          buy_order_id: string | null
+          contract: string | null
+          created_at: string
+          id: string
+          market_id: string
+          mint: boolean
+          no_buy_order_id: string | null
+          price: number
+          quantity: number
+          sell_order_id: string | null
+          yes_buy_order_id: string | null
+        }
+        Insert: {
+          buy_order_id?: string | null
+          contract?: string | null
+          created_at?: string
+          id?: string
+          market_id: string
+          mint?: boolean
+          no_buy_order_id?: string | null
+          price: number
+          quantity: number
+          sell_order_id?: string | null
+          yes_buy_order_id?: string | null
+        }
+        Update: {
+          buy_order_id?: string | null
+          contract?: string | null
+          created_at?: string
+          id?: string
+          market_id?: string
+          mint?: boolean
+          no_buy_order_id?: string | null
+          price?: number
+          quantity?: number
+          sell_order_id?: string | null
+          yes_buy_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trades_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -304,7 +480,12 @@ export type Database = {
       }
     }
     Functions: {
+      adjust_position: {
+        Args: { p_market: string; p_no: number; p_user: string; p_yes: number }
+        Returns: undefined
+      }
       auto_resolve_expired_markets: { Args: never; Returns: number }
+      cancel_order: { Args: { p_order_id: string }; Returns: Json }
       get_creator_analytics: { Args: { p_days?: number }; Returns: Json }
       has_role: {
         Args: {
@@ -313,12 +494,33 @@ export type Database = {
         }
         Returns: boolean
       }
+      match_orders: { Args: { p_market_id: string }; Returns: number }
+      mm_generate_quotes: {
+        Args: {
+          p_confidence?: string
+          p_market_id: string
+          p_model: number
+          p_quantity?: number
+        }
+        Returns: Json
+      }
       place_bet: {
         Args: {
           p_amount: number
           p_market_id: string
           p_option: string
           p_user_id: string
+        }
+        Returns: Json
+      }
+      place_limit_order: {
+        Args: {
+          p_contract: string
+          p_is_mm?: boolean
+          p_market_id: string
+          p_price: number
+          p_quantity: number
+          p_side: string
         }
         Returns: Json
       }

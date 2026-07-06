@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { OddsChart } from "@/components/OddsChart";
 import { OrderBook } from "@/components/OrderBook";
 import { TradeTicket } from "@/components/TradeTicket";
+import { ClobTradeTicket } from "@/components/ClobTradeTicket";
+import { MarketMakerPanel } from "@/components/MarketMakerPanel";
 import { fetchMarket, marketToOptions, formatVolume, type Market } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, TrendingUp, Users, Calendar, Loader2 } from "lucide-react";
 
 export default function MarketDetail() {
@@ -18,6 +21,11 @@ export default function MarketDetail() {
   const [loading, setLoading] = useState(true);
   const [initialPick, setInitialPick] = useState<string | undefined>(undefined);
   const [chartKey, setChartKey] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, []);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -177,7 +185,7 @@ export default function MarketDetail() {
           </div>
 
           {/* Right: inline trade ticket */}
-          <aside className="lg:sticky lg:top-24 self-start">
+          <aside className="lg:sticky lg:top-24 self-start space-y-4">
             {market.status === "resolved" ? (
               <div className="bg-card border border-border rounded-2xl p-5 text-center space-y-2">
                 <h3 className="font-semibold text-foreground">Trading closed</h3>
@@ -185,6 +193,18 @@ export default function MarketDetail() {
                   This market resolved <span className="text-success font-semibold">{market.resolution}</span>.
                 </p>
               </div>
+            ) : market.engine === "clob" ? (
+              <>
+                <ClobTradeTicket
+                  marketId={market.id}
+                  question={market.question}
+                  yesOdds={Number(market.yes_odds)}
+                  onPlaced={handlePlaced}
+                />
+                {userId && userId === market.creator_id && (
+                  <MarketMakerPanel marketId={market.id} onQuoted={handlePlaced} />
+                )}
+              </>
             ) : (
               <TradeTicket
                 marketId={market.id}
@@ -197,6 +217,7 @@ export default function MarketDetail() {
           </aside>
         </div>
       </main>
+
 
 
       <Footer />

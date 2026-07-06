@@ -1,53 +1,61 @@
-## Goal
-Move Kastia off the local-storage mock onto the real Lovable Cloud backend (already configured) and layer on three differentiators: richer market UX, an AI prediction assistant, and polished embeds/sharing.
+## Full CLOB + Market-Maker Bot
 
-## Phase 1 — Real backend (foundation)
-The DB schema (markets, bets, profiles, odds_history, watchlist, market_options) and the `place_bet` RPC already exist. We just need the app to use them.
+Replaces the AMM `place_bet` path for markets flagged as CLOB. Introduces a real limit order book with peer-to-peer matching, atomic $1 minting on complementary crosses, an inventory-tracked market-maker bot, and a creator UI to fire quotes on demand.
 
-- Rewrite `src/lib/api.ts` to call Supabase instead of `mockBackend` (markets, bets, watchlist, profile balance, creator stats).
-- Restore `src/hooks/useAuth.ts` usage in `src/hooks/useWallet.ts` and `src/components/ProtectedRoute.tsx` (real session, real balance from `profiles`).
-- Seed the DB with ~15 high-quality demo markets across categories (politics, crypto, sports, tech, culture) with 30 days of `odds_history` per market, via a migration that inserts rows owned by a system creator profile so they show up for everyone.
-- Auth: email/password + Google sign-in. Don't auto-confirm email. Add `/reset-password`.
-- Remove `mockBackend.ts` and the `markets-api` edge function (DB + RPC is enough; embeds will use a dedicated public endpoint — see Phase 4).
-- Subscribe `OddsChart` and market lists to Supabase Realtime on `markets` and `odds_history` so odds update live after a bet.
+## Database (one migration)
 
-## Phase 2 — Richer market UX
-- Live odds ticker with smooth number transitions (framer-motion) on market cards and detail page.
-- Order-book-style depth panel on `MarketDetail` showing recent bets, leaderboard of top traders for that market, and time-series volume.
-- Comments per market (new `market_comments` table with RLS: read-all, write-own).
-- Global leaderboard page ranking profiles by P&L from settled bets.
-- Bet slip drawer: stage multiple picks then submit in one go (one RPC call per leg, optimistic UI).
+**New tables** (all with GRANTs + RLS):
 
-## Phase 3 — AI prediction assistant
-Uses Lovable AI Gateway (`LOVABLE_API_KEY` already set, no user key needed).
+- `orders` — resting limit orders
+  - `market_id`, `user_id`, `side` (buy/sell), `contract` (YES/NO), `price` (0.01–0.99), `quantity`, `filled`, `status` (open/filled/cancelled), `is_mm` (bool)
+  - RLS: owner reads/inserts/cancels own; anon+authenticated SELECT for public book depth
+- `positions` — per-user YES/NO token holdings per market
+  - `user_id`, `market_id`, `yes_qty`, `no_qty`
+- `mm_inventory` — bot's YES/NO holdings per market (drives skew)
+  - `market_id`, `yes_qty`, `no_qty`, `target_notional`
+- `trades` — executed fills log (`market_id`, `maker_order_id`, `taker_order_id`, `price`, `quantity`, `mint` bool)
 
-- New edge function `ai-market-insight` (verify_jwt off, CORS on): takes `market_id`, fetches the market + recent odds history, calls `google/gemini-2.5-flash` with a system prompt to return: probability estimate, top 3 drivers, suggested position, confidence. Streams the response.
-- Upgrade `AIPredictionAssistant.tsx` to a chat panel inside `MarketDetail`: streaming answers with markdown rendering, "Explain this market", "What would move the odds?", "Compare to similar markets" quick-prompts.
-- New "AI Picks" rail on the dashboard: edge function ranks active markets by AI-estimated edge vs current odds, cached for 10 min.
+**New column** on `markets`: `engine text default 'amm'` — `'amm'` or `'clob'`.
 
-## Phase 4 — Embeds & sharing
-- New public edge function `embed-market` (verify_jwt off): returns market JSON + increments `embed_views`. Used by the embed iframe so embeds don't depend on browser auth/session.
-- `EmbedView.tsx` reads from that endpoint, supports `?pick=Yes&amount=25&autosubmit=1` for true one-click bets (prompts sign-in if needed via postMessage to parent).
-- `public/sdk/embed.js`: theming (light/dark/auto), size presets, `data-` attribute API, postMessage events (`bet_placed`, `resize`, `clicked`) so host pages can react.
-- Auto-generated OG share image per market: edge function `og-market` renders an SVG → PNG with the question, current odds bar, and Kastia branding. Wire into `MarketDetail` `<meta>` tags.
-- "Share" button on each market: copy link, copy embed snippet, download OG image, share to X/Reddit with prefilled text.
+**New DB functions** (SECURITY DEFINER):
+
+- `place_limit_order(market_id, side, contract, price, quantity)` — validates, inserts order, then calls `match_orders`.
+- `match_orders(market_id)` — core engine. Two match modes:
+  1. **Direct cross**: BUY YES @ p ≥ SELL YES @ p → transfer YES tokens between positions.
+  2. **Complementary mint**: BUY YES @ pY + BUY NO @ pN where pY + pN ≥ 1.00 → lock $1 total collateral, mint 1 YES to YES buyer + 1 NO to NO buyer, refund the overage. Logs `trades.mint = true`.
+- `cancel_order(order_id)` — owner only, refunds locked collateral.
+- `mm_generate_quotes(market_id, p_model, confidence)` — creator/bot only. Computes Mid = p_model, spread = 0.01 (high conf) or 0.03 (low), applies inventory skew from `mm_inventory` (±up to 0.02 based on YES–NO imbalance), then places 4 limit orders (BUY/SELL YES + BUY/SELL NO). Returns the JSON payload matching the CLOB spec the user provided.
+
+Collateral is deducted from `profiles.balance` when an order rests and refunded on cancel/mint-overage.
+
+## Backend API layer
+
+`src/lib/api.ts`:
+- `placeLimitOrder`, `cancelOrder`, `fetchOrderBook(marketId)`, `fetchMyOrders`, `fetchMyPositions(marketId)`, `mmGenerateQuotes(marketId, pModel, confidence)`.
+
+## Frontend
+
+- **`OrderBook.tsx`** — when `market.engine === 'clob'`, "Book" tab reads real `orders` (not the synthesized ladder). "Depth" tab already dynamic — stays. Realtime channel on `orders` + `trades`.
+- **`TradeTicket.tsx`** — for CLOB markets, adds Limit/Market toggle; Limit sends `place_limit_order`, Market sweeps the book via a single `place_limit_order` at 0.99/0.01.
+- **New `MarketMakerPanel.tsx`** (creator-only, shown on `MarketDetail` when they own a CLOB market):
+  - Inputs: P_model (0–1 slider), Confidence (High/Low), Quantity per side.
+  - "Generate quotes" button → calls `mm_generate_quotes` → shows the returned JSON payload in a copyable code block AND the 4 orders land on the live book.
+  - Inventory readout: YES/NO held, net delta.
+- **`CreateMarket.tsx`** — add "Matching engine" toggle: AMM (default) vs CLOB.
 
 ## Technical details
-- Tables to add via migration: `market_comments(id, market_id, user_id, body, created_at)`, plus `ALTER PUBLICATION supabase_realtime ADD TABLE markets, odds_history, bets, market_comments`.
-- Edge functions to add: `ai-market-insight`, `embed-market`, `og-market`. All use `npm:@supabase/supabase-js@2/cors` for CORS.
-- Seeding: a SQL migration that inserts a fixed `system_creator` profile (fixed UUID) and 15 markets + 450 odds_history rows.
-- Keep the current charcoal/teal design system; reuse existing tokens, no palette change.
-- `.env`: skipping per your answer — it only contains the public Supabase URL and anon key, which are designed to be public (RLS protects the data).
 
-## Out of scope for this pass
-- On-chain settlement (the `contracts/` Solidity stays untouched).
-- Real-money payments.
-- Mobile app.
+- Spread rule: `spread = confidence === 'high' ? 0.01 : 0.03` (matches the ±$0.01 / ±$0.03 spec).
+- Skew: `skew = clamp((yes_qty - no_qty) / max(target_notional, 1), -1, 1) * 0.02`. Bids and asks both shift by `-skew` when long YES.
+- Complementary matching runs after direct matching each cycle; loop until no more crossable pairs.
+- Minting event updates both users' `positions`, logs a `trades` row with `mint=true`, and does NOT move the market's midpoint via AMM — instead recomputes `markets.yes_odds` from the best bid/ask mid so charts keep working.
+- Realtime publication: add `orders` and `trades`.
+- Existing AMM markets are untouched; `place_bet` still works for `engine='amm'`.
 
-## Rollout order
-1. Phase 1 (backend swap + seed) — unblocks everything else.
-2. Phase 4 embed endpoint (small, isolated).
-3. Phase 3 AI assistant.
-4. Phase 2 polish.
+## Out of scope
 
-This is a lot for one turn. I'd suggest I ship **Phase 1 + the embed endpoint** first so the app is real and embeddable, then iterate on AI and UX polish in follow-ups. Reply "go" to start with Phase 1+4, or tell me a different order.
+- No scheduled bot loop (on-demand only per your choice).
+- No partial-cancel/replace API — cancel + repost.
+- No cross-market netting.
+
+Approve to proceed and I'll ship the migration first, then the API + UI.
