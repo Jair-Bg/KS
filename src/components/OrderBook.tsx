@@ -251,7 +251,7 @@ export function OrderBook({ marketId, yesOdds, noOdds, volume }: OrderBookProps)
               {depth.map((d) => {
                 const buyPct = (d.buy / maxSide) * 100;
                 const sellPct = (d.sell / maxSide) * 100;
-                const isMid = Math.abs(d.price - Math.round(yesOdds)) < BUCKET;
+                const isMid = Math.abs(d.price - Math.round(yesOdds)) < tick;
                 return (
                   <div
                     key={d.price}
