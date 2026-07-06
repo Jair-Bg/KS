@@ -139,7 +139,8 @@ export function OrderBook({ marketId, yesOdds, noOdds, volume }: OrderBookProps)
     };
   }, [marketId]);
 
-  const depth = useMemo(() => aggregateDepth(allBets), [allBets]);
+  const tick = useMemo(() => computeTick(allBets), [allBets]);
+  const depth = useMemo(() => aggregateDepth(allBets, tick), [allBets, tick]);
   const depthTotals = useMemo(() => {
     let buy = 0, sell = 0;
     for (const d of depth) { buy += d.buy; sell += d.sell; }
