@@ -61,6 +61,7 @@ export default function CreateMarket() {
         market_type: draft.market_type,
         end_date: new Date(draft.end_date).toISOString(),
         options: draft.market_type === "multi" ? draft.options.filter((o) => o.trim()) : undefined,
+        engine: draft.engine,
       });
       setPublishedMarket(market);
       setStep("embed");
