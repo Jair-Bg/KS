@@ -215,7 +215,31 @@ export default function CreateMarket() {
                       onChange={(e) => setDraft({ ...draft, end_date: e.target.value })}
                       className="bg-secondary border-0 rounded-lg"
                     />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1.5 block">Matching engine</label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={draft.engine === "amm" ? "oddsActive" : "odds"}
+                      size="pill"
+                      onClick={() => setDraft({ ...draft, engine: "amm" })}
+                    >
+                      AMM (instant)
+                    </Button>
+                    <Button
+                      variant={draft.engine === "clob" ? "oddsActive" : "odds"}
+                      size="pill"
+                      onClick={() => setDraft({ ...draft, engine: "clob" })}
+                    >
+                      CLOB (order book + minting)
+                    </Button>
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    CLOB enables limit orders, an order book, and atomic YES/NO minting on complementary fills.
+                  </p>
+                </div>
+
                 </div>
 
                 {/* Multi-outcome options editor */}
