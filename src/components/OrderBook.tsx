@@ -35,19 +35,46 @@ function buildLadder(midYes: number, volume: number) {
   return { asks: asks.reverse(), bids };
 }
 
-// Bucket real bets into 5¢ price levels and aggregate buy (YES) / sell (NO) volume.
-const BUCKET = 5;
+// Bucket real bets into dynamic price levels sized by the market's observed tick.
+const TICK_CHOICES = [1, 2, 5, 10] as const;
+type Tick = typeof TICK_CHOICES[number];
+
+// Pick a tick so the depth ladder shows a readable number of levels (~8-20)
+// spanning the observed price range. Falls back to 5¢ when data is thin.
+function computeTick(rows: TradeRow[]): Tick {
+  if (rows.length < 2) return 5;
+  let min = Infinity, max = -Infinity;
+  for (const r of rows) {
+    const p = Number(r.odds_at_time);
+    if (!Number.isFinite(p)) continue;
+    if (p < min) min = p;
+    if (p > max) max = p;
+  }
+  const range = Math.max(1, max - min);
+  const ideal = range / 14; // target ~14 levels
+  let best: Tick = 5;
+  let bestDiff = Infinity;
+  for (const t of TICK_CHOICES) {
+    const levels = range / t;
+    const penalty = levels < 6 ? (6 - levels) * 2 : levels > 24 ? (levels - 24) * 2 : 0;
+    const diff = Math.abs(t - ideal) + penalty;
+    if (diff < bestDiff) { bestDiff = diff; best = t; }
+  }
+  return best;
+}
+
 type DepthLevel = { price: number; buy: number; sell: number };
 
-function aggregateDepth(rows: TradeRow[]): DepthLevel[] {
+function aggregateDepth(rows: TradeRow[], bucket: number): DepthLevel[] {
   const map = new Map<number, DepthLevel>();
+  const maxBucket = Math.floor(99 / bucket) * bucket;
   for (const r of rows) {
     const raw = Math.max(1, Math.min(99, Math.round(Number(r.odds_at_time))));
-    const bucket = Math.max(BUCKET, Math.min(95, Math.round(raw / BUCKET) * BUCKET));
-    const cur = map.get(bucket) ?? { price: bucket, buy: 0, sell: 0 };
+    const b = Math.max(bucket, Math.min(maxBucket, Math.round(raw / bucket) * bucket));
+    const cur = map.get(b) ?? { price: b, buy: 0, sell: 0 };
     if (r.option.toLowerCase() === "yes") cur.buy += Number(r.amount);
     else cur.sell += Number(r.amount);
-    map.set(bucket, cur);
+    map.set(b, cur);
   }
   return Array.from(map.values()).sort((a, b) => b.price - a.price);
 }
