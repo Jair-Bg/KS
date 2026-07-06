@@ -294,7 +294,7 @@ export function OrderBook({ marketId, yesOdds, noOdds, volume }: OrderBookProps)
           )}
 
           <p className="mt-3 text-[10px] text-muted-foreground/70 text-center">
-            Aggregated from {allBets.length} trade{allBets.length === 1 ? "" : "s"} · {BUCKET}¢ price buckets
+            Aggregated from {allBets.length} trade{allBets.length === 1 ? "" : "s"} · {tick}¢ price buckets
           </p>
         </div>
       )}
