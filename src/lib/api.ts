@@ -19,7 +19,52 @@ export interface Market {
   end_date: string;
   created_at: string;
   updated_at: string;
+  engine?: "amm" | "clob";
   options?: MarketOptionRow[];
+}
+
+// ─── CLOB Types ─────────────────────────────────────────────────
+export interface OrderRow {
+  id: string;
+  market_id: string;
+  user_id: string;
+  side: "BUY" | "SELL";
+  contract: "YES" | "NO";
+  price: number;
+  quantity: number;
+  filled: number;
+  status: "open" | "filled" | "cancelled";
+  is_mm: boolean;
+  created_at: string;
+}
+export interface TradeRow {
+  id: string;
+  market_id: string;
+  contract: string | null;
+  price: number;
+  quantity: number;
+  mint: boolean;
+  created_at: string;
+}
+export interface PositionRow {
+  user_id: string;
+  market_id: string;
+  yes_qty: number;
+  no_qty: number;
+}
+export interface MMQuoteResponse {
+  event_id: string;
+  timestamp: number;
+  mid: number;
+  spread: number;
+  skew: number;
+  market_maker_orders: Array<{
+    side: "BUY" | "SELL";
+    contract: "YES" | "NO";
+    order_type: "LIMIT";
+    price: number;
+    quantity_contracts: number;
+  }>;
 }
 
 export interface MarketOptionRow {
