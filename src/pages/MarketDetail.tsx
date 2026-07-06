@@ -185,7 +185,7 @@ export default function MarketDetail() {
           </div>
 
           {/* Right: inline trade ticket */}
-          <aside className="lg:sticky lg:top-24 self-start">
+          <aside className="lg:sticky lg:top-24 self-start space-y-4">
             {market.status === "resolved" ? (
               <div className="bg-card border border-border rounded-2xl p-5 text-center space-y-2">
                 <h3 className="font-semibold text-foreground">Trading closed</h3>
@@ -193,6 +193,18 @@ export default function MarketDetail() {
                   This market resolved <span className="text-success font-semibold">{market.resolution}</span>.
                 </p>
               </div>
+            ) : market.engine === "clob" ? (
+              <>
+                <ClobTradeTicket
+                  marketId={market.id}
+                  question={market.question}
+                  yesOdds={Number(market.yes_odds)}
+                  onPlaced={handlePlaced}
+                />
+                {userId && userId === market.creator_id && (
+                  <MarketMakerPanel marketId={market.id} onQuoted={handlePlaced} />
+                )}
+              </>
             ) : (
               <TradeTicket
                 marketId={market.id}
@@ -205,6 +217,7 @@ export default function MarketDetail() {
           </aside>
         </div>
       </main>
+
 
 
       <Footer />
