@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { OddsChart } from "@/components/OddsChart";
 import { OrderBook } from "@/components/OrderBook";
 import { TradeTicket } from "@/components/TradeTicket";
+import { ClobTradeTicket } from "@/components/ClobTradeTicket";
+import { MarketMakerPanel } from "@/components/MarketMakerPanel";
 import { fetchMarket, marketToOptions, formatVolume, type Market } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, TrendingUp, Users, Calendar, Loader2 } from "lucide-react";
 
 export default function MarketDetail() {
