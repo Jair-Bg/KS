@@ -293,7 +293,7 @@ export async function mmGenerateQuotes(payload: {
     p_quantity: payload.quantity ?? 1000,
   } as any);
   if (error) throw error;
-  return data as MMQuoteResponse;
+  return data as unknown as MMQuoteResponse;
 }
 
 export async function fetchMMInventory(marketId: string): Promise<{ yes_qty: number; no_qty: number; target_notional: number } | null> {
