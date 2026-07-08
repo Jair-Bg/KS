@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ConnectWalletButton } from "@/components/ConnectWalletButton";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -53,6 +54,9 @@ export function LandingHeader() {
 
             <div className="flex items-center gap-3">
               <ThemeToggle />
+              <div className="hidden md:block">
+                <ConnectWalletButton />
+              </div>
               <Button
                 variant="ghost"
                 className="hidden md:inline-flex text-sm"
