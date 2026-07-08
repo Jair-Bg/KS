@@ -233,10 +233,9 @@ export async function cancelOrder(orderId: string): Promise<void> {
 
 export async function fetchOrderBook(marketId: string): Promise<OrderRow[]> {
   const { data, error } = await supabase
-    .from("orders" as any)
+    .from("order_book" as any)
     .select("*")
     .eq("market_id", marketId)
-    .eq("status", "open")
     .order("price", { ascending: false })
     .limit(500);
   if (error) throw error;
