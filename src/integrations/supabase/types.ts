@@ -451,6 +451,56 @@ export type Database = {
       }
     }
     Views: {
+      order_book: {
+        Row: {
+          contract: string | null
+          created_at: string | null
+          filled: number | null
+          id: string | null
+          is_mm: boolean | null
+          market_id: string | null
+          price: number | null
+          quantity: number | null
+          remaining: number | null
+          side: string | null
+          status: string | null
+        }
+        Insert: {
+          contract?: string | null
+          created_at?: string | null
+          filled?: number | null
+          id?: string | null
+          is_mm?: boolean | null
+          market_id?: string | null
+          price?: number | null
+          quantity?: number | null
+          remaining?: never
+          side?: string | null
+          status?: string | null
+        }
+        Update: {
+          contract?: string | null
+          created_at?: string | null
+          filled?: number | null
+          id?: string | null
+          is_mm?: boolean | null
+          market_id?: string | null
+          price?: number | null
+          quantity?: number | null
+          remaining?: never
+          side?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles_public: {
         Row: {
           avatar_url: string | null
