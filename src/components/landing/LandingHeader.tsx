@@ -54,6 +54,9 @@ export function LandingHeader() {
 
             <div className="flex items-center gap-3">
               <ThemeToggle />
+              <div className="hidden md:block">
+                <ConnectWalletButton />
+              </div>
               <Button
                 variant="ghost"
                 className="hidden md:inline-flex text-sm"
