@@ -534,6 +534,32 @@ export type Database = {
         Args: { p_market: string; p_no: number; p_user: string; p_yes: number }
         Returns: undefined
       }
+      admin_force_resolve: {
+        Args: { p_market_id: string; p_outcome: string }
+        Returns: Json
+      }
+      admin_get_stats: { Args: never; Returns: Json }
+      admin_list_users: {
+        Args: { p_limit?: number }
+        Returns: {
+          balance: number
+          created_at: string
+          created_markets: number
+          display_name: string
+          roles: string[]
+          total_bets: number
+          total_winnings: number
+          user_id: string
+        }[]
+      }
+      admin_set_role: {
+        Args: {
+          p_grant: boolean
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
+        }
+        Returns: Json
+      }
       auto_resolve_expired_markets: { Args: never; Returns: number }
       cancel_order: { Args: { p_order_id: string }; Returns: Json }
       get_creator_analytics: { Args: { p_days?: number }; Returns: Json }
