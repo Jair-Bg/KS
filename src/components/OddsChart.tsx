@@ -73,13 +73,40 @@ export function OddsChart({ marketId, height = 240 }: OddsChartProps) {
   return (
     <div style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-          <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${v}%`} />
-          <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-          <Line type="monotone" dataKey="yes" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name="Yes" isAnimationActive={false} />
-          <Line type="monotone" dataKey="no" stroke="hsl(var(--muted-foreground))" strokeWidth={2} dot={false} strokeDasharray="5 5" name="No" isAnimationActive={false} />
-        </LineChart>
+        <AreaChart data={data} margin={{ top: 10, right: 8, left: -12, bottom: 0 }}>
+          <defs>
+            <linearGradient id="yesGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="hsl(166, 100%, 45%)" stopOpacity={0.45} />
+              <stop offset="100%" stopColor="hsl(166, 100%, 45%)" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="noGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="hsl(280, 85%, 62%)" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="hsl(280, 85%, 62%)" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="yesStroke" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="hsl(172, 90%, 48%)" />
+              <stop offset="100%" stopColor="hsl(160, 100%, 42%)" />
+            </linearGradient>
+            <linearGradient id="noStroke" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="hsl(300, 85%, 65%)" />
+              <stop offset="100%" stopColor="hsl(260, 90%, 62%)" />
+            </linearGradient>
+          </defs>
+          <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 6" vertical={false} opacity={0.4} />
+          <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
+          <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `${v}%`} />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "hsl(var(--card))",
+              border: "1px solid hsl(var(--border))",
+              borderRadius: 12,
+              fontSize: 12,
+              boxShadow: "0 12px 40px -12px hsl(var(--foreground) / 0.25)",
+            }}
+          />
+          <Area type="monotone" dataKey="yes" stroke="url(#yesStroke)" strokeWidth={2.5} fill="url(#yesGrad)" name="Yes" isAnimationActive={false} />
+          <Area type="monotone" dataKey="no" stroke="url(#noStroke)" strokeWidth={2.5} fill="url(#noGrad)" name="No" isAnimationActive={false} />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );
