@@ -145,10 +145,10 @@ export default function MarketDetail() {
                 <h2 className="font-semibold text-foreground">Odds history</h2>
                 <div className="flex gap-3 text-xs">
                   <span className="inline-flex items-center gap-1.5 text-foreground">
-                    <span className="w-2 h-2 rounded-full bg-primary" /> Yes
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "linear-gradient(135deg, hsl(172,90%,48%), hsl(160,100%,42%))" }} /> Yes
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-muted-foreground">
-                    <span className="w-2 h-2 rounded-full bg-muted-foreground" /> No
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: "linear-gradient(135deg, hsl(300,85%,65%), hsl(260,90%,62%))" }} /> No
                   </span>
                 </div>
               </div>
