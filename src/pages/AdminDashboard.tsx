@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Loader2, Shield, ShieldOff, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, Shield, ShieldOff, CheckCircle2, XCircle, ScrollText } from "lucide-react";
+import { Link } from "react-router-dom";
 import { fetchMarkets, formatVolume, type Market } from "@/lib/api";
 
 type Stats = {
@@ -66,9 +67,14 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container max-w-7xl mx-auto px-4 py-8 space-y-8">
-        <div className="flex items-center gap-3">
-          <Shield className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Shield className="w-6 h-6 text-primary" />
+            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          </div>
+          <Link to="/admin/audit">
+            <Button variant="outline" size="sm"><ScrollText className="w-4 h-4 mr-1" /> Audit log</Button>
+          </Link>
         </div>
 
         {loading && !stats ? (

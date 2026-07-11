@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          details: Json
+          id: string
+          target_market_id: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          details?: Json
+          id?: string
+          target_market_id?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          target_market_id?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       bets: {
         Row: {
           amount: number
@@ -539,6 +569,21 @@ export type Database = {
         Returns: Json
       }
       admin_get_stats: { Args: never; Returns: Json }
+      admin_list_audit: {
+        Args: { p_limit?: number }
+        Returns: {
+          action: string
+          actor_id: string
+          actor_name: string
+          created_at: string
+          details: Json
+          id: string
+          target_market_id: string
+          target_market_question: string
+          target_user_id: string
+          target_user_name: string
+        }[]
+      }
       admin_list_users: {
         Args: { p_limit?: number }
         Returns: {
