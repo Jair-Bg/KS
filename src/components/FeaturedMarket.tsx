@@ -70,21 +70,40 @@ export function FeaturedMarket() {
 
           <div className="h-64 lg:h-auto">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 8, left: -12, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="fmSeattleFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(166, 100%, 45%)" stopOpacity={0.45} />
+                    <stop offset="100%" stopColor="hsl(166, 100%, 45%)" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="fmNeFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(28, 95%, 60%)" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="hsl(28, 95%, 60%)" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="fmSeattleStroke" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="hsl(172, 90%, 48%)" />
+                    <stop offset="100%" stopColor="hsl(160, 100%, 42%)" />
+                  </linearGradient>
+                  <linearGradient id="fmNeStroke" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="hsl(340, 85%, 60%)" />
+                    <stop offset="100%" stopColor="hsl(28, 95%, 58%)" />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="hsl(220, 13%, 91%)" strokeDasharray="3 6" vertical={false} opacity={0.6} />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(220, 9%, 46%)' }} />
                 <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'hsl(220, 9%, 46%)' }} tickFormatter={(value) => `${value}%`} />
-                <Tooltip contentStyle={{ backgroundColor: 'hsl(0, 0%, 100%)', border: '1px solid hsl(220, 13%, 91%)', borderRadius: '8px', fontSize: '12px' }} />
-                <Line type="monotone" dataKey="seattle" stroke="hsl(166, 100%, 39%)" strokeWidth={2} dot={false} name="Seattle" />
-                <Line type="monotone" dataKey="newEngland" stroke="hsl(220, 9%, 46%)" strokeWidth={2} dot={false} strokeDasharray="5 5" name="New England" />
-              </LineChart>
+                <Tooltip contentStyle={{ backgroundColor: 'hsl(0, 0%, 100%)', border: '1px solid hsl(220, 13%, 91%)', borderRadius: 12, fontSize: 12, boxShadow: '0 12px 40px -12px hsl(220 24% 10% / 0.15)' }} />
+                <Area type="monotone" dataKey="seattle" stroke="url(#fmSeattleStroke)" strokeWidth={2.5} fill="url(#fmSeattleFill)" name="Seattle" />
+                <Area type="monotone" dataKey="newEngland" stroke="url(#fmNeStroke)" strokeWidth={2.5} fill="url(#fmNeFill)" name="New England" />
+              </AreaChart>
             </ResponsiveContainer>
             <div className="flex items-center justify-end gap-6 mt-2 text-sm">
               <div className="flex items-center gap-2">
-                <span className="w-4 h-0.5 bg-primary"></span>
+                <span className="w-3 h-3 rounded-full" style={{ background: 'linear-gradient(135deg, hsl(172,90%,48%), hsl(160,100%,42%))' }}></span>
                 <span>Seattle <span className="font-semibold">68%</span></span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-4 h-0.5 bg-muted-foreground" style={{ borderTop: '2px dashed' }}></span>
+                <span className="w-3 h-3 rounded-full" style={{ background: 'linear-gradient(135deg, hsl(340,85%,60%), hsl(28,95%,58%))' }}></span>
                 <span>New England <span className="font-semibold">33%</span></span>
               </div>
             </div>
