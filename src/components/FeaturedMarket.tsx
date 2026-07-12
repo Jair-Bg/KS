@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Button } from "./ui/button";
 import { BetModal } from "./BetModal";
-import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
+import { GradientAreaChart, paletteSwatch } from "./charts/GradientAreaChart";
 
 const chartData = [
   { month: "Feb", seattle: 45, newEngland: 55 },
