@@ -1,5 +1,26 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
+
+// Force Recharts' ResponsiveContainer to render at a fixed size in jsdom so
+// the underlying <svg> (and its <linearGradient> defs) actually mount.
+vi.mock("recharts", async () => {
+  const actual = await vi.importActual<typeof import("recharts")>("recharts");
+  return {
+    ...actual,
+    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+      <div style={{ width: 600, height: 300 }}>
+        {/* @ts-expect-error clone with explicit dims */}
+        {typeof children === "object" && children !== null
+          ? (require("react") as typeof import("react")).cloneElement(children as any, {
+              width: 600,
+              height: 300,
+            })
+          : children}
+      </div>
+    ),
+  };
+});
+
 import {
   GradientAreaChart,
   CHART_PALETTE,
