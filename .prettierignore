@@ -1,0 +1,8 @@
+dist
+node_modules
+coverage
+.lovable
+public
+src/integrations/supabase/types.ts
+supabase/functions
+*.md
