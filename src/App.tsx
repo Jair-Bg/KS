@@ -22,6 +22,7 @@ import Auth from "./pages/Auth";
 import CreatorAuth from "./pages/CreatorAuth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import OAuthConsent from "./pages/OAuthConsent";
 import { AIPredictionAssistant } from "./components/AIPredictionAssistant";
 
 const App = () => (
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/auth/creator" element={<CreatorAuth />} />
             <Route path="/creator-signup" element={<CreatorAuth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
