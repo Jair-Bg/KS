@@ -1,0 +1,222 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://cwecrtmyhemghqzyywap.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "kastia",
+      "version": "0.1.0",
+      "title": "Kastia"
+    },
+    "tools": [
+      {
+        "name": "list_markets",
+        "title": "List markets",
+        "description": "List active prediction markets, optionally filtered by category or a text search on the question.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "category": {
+              "description": "Category filter, e.g. crypto.",
+              "type": "string",
+              "minLength": 1
+            },
+            "search": {
+              "description": "Text to match in the market question.",
+              "type": "string",
+              "minLength": 1
+            },
+            "limit": {
+              "description": "Max markets to return (default 20).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_market",
+        "title": "Get market",
+        "description": "Get one prediction market by id, including current YES/NO odds, volume, resolution status and recent order book depth.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "market_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The market id."
+            }
+          },
+          "required": [
+            "market_id"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_portfolio",
+        "title": "Get portfolio",
+        "description": "Get the signed-in user's demo balance, open bets and CLOB positions across all markets.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "place_bet",
+        "title": "Place bet",
+        "description": "Place a bet as the signed-in user on an AMM market outcome (Yes or No) for a given amount of demo balance.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "market_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The market to bet on."
+            },
+            "option": {
+              "type": "string",
+              "enum": [
+                "Yes",
+                "No"
+              ],
+              "description": "Outcome to back."
+            },
+            "amount": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 10000,
+              "description": "Stake amount in demo balance."
+            }
+          },
+          "required": [
+            "market_id",
+            "option",
+            "amount"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "place_limit_order",
+        "title": "Place limit order",
+        "description": "Place a resting limit order on a CLOB market as the signed-in user (BUY/SELL of a YES or NO contract at a price between 0.01 and 0.99).",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "market_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "CLOB market id."
+            },
+            "side": {
+              "type": "string",
+              "enum": [
+                "BUY",
+                "SELL"
+              ],
+              "description": "Order side."
+            },
+            "contract": {
+              "type": "string",
+              "enum": [
+                "YES",
+                "NO"
+              ],
+              "description": "Contract to trade."
+            },
+            "price": {
+              "type": "number",
+              "minimum": 0.01,
+              "maximum": 0.99,
+              "description": "Limit price in dollars per contract."
+            },
+            "quantity": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100000,
+              "description": "Number of contracts."
+            }
+          },
+          "required": [
+            "market_id",
+            "side",
+            "contract",
+            "price",
+            "quantity"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "cancel_order",
+        "title": "Cancel order",
+        "description": "Cancel one of the signed-in user's open limit orders and refund its collateral.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "description": "The order id to cancel."
+            }
+          },
+          "required": [
+            "order_id"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

@@ -24,6 +24,10 @@ export default function Auth() {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
 
+  // Where to send the user after auth (used by the OAuth consent flow)
+  const rawNext = searchParams.get("next");
+  const nextPath = rawNext && /^\/(?!\/)/.test(rawNext) ? rawNext : "/markets";
+
   // Redirect creator-type query param to the dedicated creator signup page
   useEffect(() => {
     if (searchParams.get("type") === "creator") {
@@ -34,9 +38,9 @@ export default function Auth() {
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
-      navigate("/markets", { replace: true });
+      navigate(nextPath, { replace: true });
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, nextPath]);
 
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -47,14 +51,14 @@ export default function Auth() {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/markets");
+        navigate(nextPath);
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: { full_name: displayName, display_name: displayName, account_type: "user" },
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: `${window.location.origin}${nextPath}`,
           },
         });
         if (error) throw error;
@@ -63,7 +67,7 @@ export default function Auth() {
             title: "Welcome!",
             description: "Your demo account is ready.",
           });
-          navigate("/markets");
+          navigate(nextPath);
         } else {
           toast({
             title: "Check your email",
@@ -87,7 +91,7 @@ export default function Auth() {
     setSocialLoading(provider);
     try {
       const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: `${window.location.origin}/markets`,
+        redirect_uri: `${window.location.origin}${nextPath}`,
       });
       if (result.error) {
         toast({
