@@ -9,6 +9,7 @@ import { CreatorRoute } from "./components/CreatorRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminAudit from "./pages/AdminAudit";
+import AdminMcpLogs from "./pages/AdminMcpLogs";
 import Index from "./pages/Index";
 import Markets from "./pages/Markets";
 import MarketDetail from "./pages/MarketDetail";
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/creator-dashboard" element={<CreatorRoute><CreatorDashboard /></CreatorRoute>} />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/admin/audit" element={<AdminRoute><AdminAudit /></AdminRoute>} />
+            <Route path="/admin/mcp-logs" element={<AdminRoute><AdminMcpLogs /></AdminRoute>} />
 
             <Route path="/creators" element={<Creators />} />
             <Route path="/embeds" element={<CreatorRoute><EmbedManager /></CreatorRoute>} />
