@@ -190,6 +190,42 @@ export type Database = {
         }
         Relationships: []
       }
+      mcp_tool_logs: {
+        Row: {
+          arguments: Json
+          client_id: string | null
+          created_at: string
+          duration_ms: number
+          error_message: string | null
+          id: string
+          success: boolean
+          tool_name: string
+          user_id: string
+        }
+        Insert: {
+          arguments?: Json
+          client_id?: string | null
+          created_at?: string
+          duration_ms?: number
+          error_message?: string | null
+          id?: string
+          success?: boolean
+          tool_name: string
+          user_id?: string
+        }
+        Update: {
+          arguments?: Json
+          client_id?: string | null
+          created_at?: string
+          duration_ms?: number
+          error_message?: string | null
+          id?: string
+          success?: boolean
+          tool_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mm_inventory: {
         Row: {
           market_id: string
