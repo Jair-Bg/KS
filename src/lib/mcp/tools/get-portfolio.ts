@@ -1,6 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { supabaseForUser } from "../supabase";
+import { withLogging } from "../logging";
 
 export default defineTool({
   name: "get_portfolio",
@@ -9,7 +10,7 @@ export default defineTool({
     "Get the signed-in user's demo balance, open bets and CLOB positions across all markets.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async (_input, ctx) => {
+  handler: withLogging("get_portfolio", async (_input, ctx) => {
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
@@ -36,5 +37,5 @@ export default defineTool({
       content: [{ type: "text", text: JSON.stringify(payload) }],
       structuredContent: payload,
     };
-  },
+  }),
 });

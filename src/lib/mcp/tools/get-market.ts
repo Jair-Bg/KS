@@ -1,6 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { supabaseForUser } from "../supabase";
+import { withLogging } from "../logging";
 
 export default defineTool({
   name: "get_market",
@@ -9,7 +10,7 @@ export default defineTool({
     "Get one prediction market by id, including current YES/NO odds, volume, resolution status and recent order book depth.",
   inputSchema: { market_id: z.string().uuid().describe("The market id.") },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ market_id }, ctx) => {
+  handler: withLogging("get_market", async ({ market_id }, ctx) => {
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
@@ -35,5 +36,5 @@ export default defineTool({
       content: [{ type: "text", text: JSON.stringify(payload) }],
       structuredContent: payload,
     };
-  },
+  }),
 });

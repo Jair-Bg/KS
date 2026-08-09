@@ -60,6 +60,42 @@ function supabaseForUser(ctx) {
   });
 }
 
+// src/lib/mcp/logging.ts
+function withLogging(toolName, handler) {
+  return async (input, ctx) => {
+    const startedAt = Date.now();
+    let result;
+    let thrown = null;
+    try {
+      result = await handler(input, ctx);
+    } catch (err) {
+      thrown = err;
+      result = {
+        content: [{ type: "text", text: err instanceof Error ? err.message : "Tool failed" }],
+        isError: true
+      };
+    }
+    const durationMs = Date.now() - startedAt;
+    const success = !thrown && !result.isError;
+    const errorMessage = success ? null : thrown instanceof Error ? thrown.message : result.content?.[0]?.text ?? "Unknown error";
+    try {
+      if (ctx.isAuthenticated?.()) {
+        await supabaseForUser(ctx).from("mcp_tool_logs").insert({
+          user_id: ctx.getUserId(),
+          tool_name: toolName,
+          client_id: ctx.getClientId?.() ?? null,
+          arguments: input ?? {},
+          success,
+          error_message: errorMessage,
+          duration_ms: durationMs
+        });
+      }
+    } catch {
+    }
+    return result;
+  };
+}
+
 // src/lib/mcp/tools/list-markets.ts
 var list_markets_default = defineTool({
   name: "list_markets",
@@ -71,7 +107,7 @@ var list_markets_default = defineTool({
     limit: z.number().int().min(1).max(50).optional().describe("Max markets to return (default 20).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ category, search, limit }, ctx) => {
+  handler: withLogging("list_markets", async ({ category, search, limit }, ctx) => {
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
@@ -85,7 +121,7 @@ var list_markets_default = defineTool({
       content: [{ type: "text", text: JSON.stringify(data ?? []) }],
       structuredContent: { markets: data ?? [] }
     };
-  }
+  })
 });
 
 // src/lib/mcp/tools/get-market.ts
@@ -97,7 +133,7 @@ var get_market_default = defineTool2({
   description: "Get one prediction market by id, including current YES/NO odds, volume, resolution status and recent order book depth.",
   inputSchema: { market_id: z2.string().uuid().describe("The market id.") },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ market_id }, ctx) => {
+  handler: withLogging("get_market", async ({ market_id }, ctx) => {
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
@@ -111,7 +147,7 @@ var get_market_default = defineTool2({
       content: [{ type: "text", text: JSON.stringify(payload) }],
       structuredContent: payload
     };
-  }
+  })
 });
 
 // src/lib/mcp/tools/get-portfolio.ts
@@ -122,7 +158,7 @@ var get_portfolio_default = defineTool3({
   description: "Get the signed-in user's demo balance, open bets and CLOB positions across all markets.",
   inputSchema: {},
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async (_input, ctx) => {
+  handler: withLogging("get_portfolio", async (_input, ctx) => {
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
@@ -142,7 +178,7 @@ var get_portfolio_default = defineTool3({
       content: [{ type: "text", text: JSON.stringify(payload) }],
       structuredContent: payload
     };
-  }
+  })
 });
 
 // src/lib/mcp/tools/place-bet.ts
@@ -158,7 +194,7 @@ var place_bet_default = defineTool4({
     amount: z3.number().positive().max(1e4).describe("Stake amount in demo balance.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
-  handler: async ({ market_id, option, amount }, ctx) => {
+  handler: withLogging("place_bet", async ({ market_id, option, amount }, ctx) => {
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
@@ -174,7 +210,7 @@ var place_bet_default = defineTool4({
       content: [{ type: "text", text: JSON.stringify(data) }],
       structuredContent: { result: data }
     };
-  }
+  })
 });
 
 // src/lib/mcp/tools/place-limit-order.ts
@@ -192,7 +228,7 @@ var place_limit_order_default = defineTool5({
     quantity: z4.number().positive().max(1e5).describe("Number of contracts.")
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
-  handler: async ({ market_id, side, contract, price, quantity }, ctx) => {
+  handler: withLogging("place_limit_order", async ({ market_id, side, contract, price, quantity }, ctx) => {
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
@@ -209,7 +245,7 @@ var place_limit_order_default = defineTool5({
       content: [{ type: "text", text: JSON.stringify(data) }],
       structuredContent: { result: data }
     };
-  }
+  })
 });
 
 // src/lib/mcp/tools/cancel-order.ts
@@ -221,7 +257,7 @@ var cancel_order_default = defineTool6({
   description: "Cancel one of the signed-in user's open limit orders and refund its collateral.",
   inputSchema: { order_id: z5.string().uuid().describe("The order id to cancel.") },
   annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
-  handler: async ({ order_id }, ctx) => {
+  handler: withLogging("cancel_order", async ({ order_id }, ctx) => {
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
@@ -232,7 +268,7 @@ var cancel_order_default = defineTool6({
       content: [{ type: "text", text: `Order ${order_id} cancelled.` }],
       structuredContent: { order_id, status: "cancelled" }
     };
-  }
+  })
 });
 
 // src/lib/mcp/index.ts
