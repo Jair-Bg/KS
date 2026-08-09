@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Loader2, Shield, ShieldOff, CheckCircle2, XCircle, ScrollText } from "lucide-react";
+import { Loader2, Shield, ShieldOff, CheckCircle2, XCircle, ScrollText , Plug} from "lucide-react";
 import { Link } from "react-router-dom";
 import { fetchMarkets, formatVolume, type Market } from "@/lib/api";
 
@@ -72,9 +72,14 @@ export default function AdminDashboard() {
             <Shield className="w-6 h-6 text-primary" />
             <h1 className="text-2xl font-bold">Admin Dashboard</h1>
           </div>
-          <Link to="/admin/audit">
-            <Button variant="outline" size="sm"><ScrollText className="w-4 h-4 mr-1" /> Audit log</Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link to="/admin/audit">
+              <Button variant="outline" size="sm"><ScrollText className="w-4 h-4 mr-1" /> Audit log</Button>
+            </Link>
+            <Link to="/admin/mcp-logs">
+              <Button variant="outline" size="sm"><Plug className="w-4 h-4 mr-1" /> MCP logs</Button>
+            </Link>
+          </div>
         </div>
 
         {loading && !stats ? (

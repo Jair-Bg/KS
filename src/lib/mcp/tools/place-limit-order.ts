@@ -1,6 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { supabaseForUser } from "../supabase";
+import { withLogging } from "../logging";
 
 export default defineTool({
   name: "place_limit_order",
@@ -15,7 +16,7 @@ export default defineTool({
     quantity: z.number().positive().max(100000).describe("Number of contracts."),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
-  handler: async ({ market_id, side, contract, price, quantity }, ctx) => {
+  handler: withLogging("place_limit_order", async ({ market_id, side, contract, price, quantity }, ctx) => {
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
@@ -32,5 +33,5 @@ export default defineTool({
       content: [{ type: "text", text: JSON.stringify(data) }],
       structuredContent: { result: data },
     };
-  },
+  }),
 });

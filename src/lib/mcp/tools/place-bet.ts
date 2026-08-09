@@ -1,6 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { supabaseForUser } from "../supabase";
+import { withLogging } from "../logging";
 
 export default defineTool({
   name: "place_bet",
@@ -13,7 +14,7 @@ export default defineTool({
     amount: z.number().positive().max(10000).describe("Stake amount in demo balance."),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
-  handler: async ({ market_id, option, amount }, ctx) => {
+  handler: withLogging("place_bet", async ({ market_id, option, amount }, ctx) => {
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
@@ -29,5 +30,5 @@ export default defineTool({
       content: [{ type: "text", text: JSON.stringify(data) }],
       structuredContent: { result: data },
     };
-  },
+  }),
 });

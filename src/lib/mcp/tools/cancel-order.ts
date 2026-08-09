@@ -1,6 +1,7 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { z } from "zod";
 import { supabaseForUser } from "../supabase";
+import { withLogging } from "../logging";
 
 export default defineTool({
   name: "cancel_order",
@@ -8,7 +9,7 @@ export default defineTool({
   description: "Cancel one of the signed-in user's open limit orders and refund its collateral.",
   inputSchema: { order_id: z.string().uuid().describe("The order id to cancel.") },
   annotations: { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
-  handler: async ({ order_id }, ctx) => {
+  handler: withLogging("cancel_order", async ({ order_id }, ctx) => {
     if (!ctx.isAuthenticated()) {
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
@@ -19,5 +20,5 @@ export default defineTool({
       content: [{ type: "text", text: `Order ${order_id} cancelled.` }],
       structuredContent: { order_id, status: "cancelled" },
     };
-  },
+  }),
 });
