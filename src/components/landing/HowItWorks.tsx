@@ -75,7 +75,7 @@ export function HowItWorks() {
                     </span>
                   </div>
                   <h3 className="font-semibold text-foreground mb-2.5 text-lg">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
+                  <p className="text-base md:text-sm text-muted-foreground leading-relaxed">{step.description}</p>
                 </div>
               </div>
             </motion.div>
