@@ -275,3 +275,26 @@
     text-wrap: balance;
   }
 }
+
+@layer utilities {
+  /* Minimum 44x44px tap target on touch/mobile viewports */
+  .tap-target {
+    @apply min-h-11 min-w-11;
+  }
+
+  @media (max-width: 767px) {
+    .tap-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Readable dense text: never below 16px on mobile */
+  .body-copy {
+    @apply text-base leading-relaxed;
+  }
+
+  .meta-copy {
+    @apply text-sm leading-normal;
+  }
+}
