@@ -72,7 +72,7 @@ export function ValueProps() {
                   <prop.icon className="w-5 h-5 text-primary" />
                 </div>
                 <h3 className="font-semibold text-lg text-foreground mb-2">{prop.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{prop.description}</p>
+                <p className="text-base md:text-sm text-muted-foreground leading-relaxed">{prop.description}</p>
               </div>
             </motion.div>
           ))}

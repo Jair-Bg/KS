@@ -98,7 +98,7 @@ export function HeroSection() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="flex items-center justify-center gap-10 pt-4 text-sm text-muted-foreground"
+            className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 pt-4 text-base md:text-sm text-muted-foreground"
           >
             {["No code required", "Free to start", "Earn 5–15% of volume"].map((text) => (
               <div key={text} className="flex items-center gap-2.5">

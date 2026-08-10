@@ -23,7 +23,7 @@
     --secondary-foreground: 228 24% 10%;
 
     --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    --muted-foreground: 220 12% 38%;
 
     --accent: 166 100% 36%;
     --accent-foreground: 0 0% 100%;
@@ -84,7 +84,7 @@
     --secondary-foreground: 0 0% 96%;
 
     --muted: 228 20% 14%;
-    --muted-foreground: 220 9% 55%;
+    --muted-foreground: 220 16% 74%;
 
     --accent: 166 100% 39%;
     --accent-foreground: 228 28% 6%;
@@ -117,9 +117,32 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    font-size: 1rem; /* 16px minimum on mobile */
+    line-height: 1.6;
+  }
+
+  p, li, dd {
+    line-height: 1.6;
+  }
+
+  /* Visible keyboard focus for every interactive control */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: calc(var(--radius) / 2);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -127,6 +150,7 @@
     @apply font-bold tracking-tight;
   }
 }
+
 
 @layer components {
   .odds-badge {
@@ -249,5 +273,28 @@
 
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+@layer utilities {
+  /* Minimum 44x44px tap target on touch/mobile viewports */
+  .tap-target {
+    @apply min-h-11 min-w-11;
+  }
+
+  @media (max-width: 767px) {
+    .tap-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Readable dense text: never below 16px on mobile */
+  .body-copy {
+    @apply text-base leading-relaxed;
+  }
+
+  .meta-copy {
+    @apply text-sm leading-normal;
   }
 }

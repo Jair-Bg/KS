@@ -70,12 +70,12 @@ export function HowItWorks() {
                     <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
                       <step.icon className="w-5 h-5 text-primary" />
                     </div>
-                    <span className="text-[11px] font-bold text-muted-foreground/40 tracking-widest">
+                    <span className="text-xs font-bold text-muted-foreground tracking-widest">
                       STEP 0{i + 1}
                     </span>
                   </div>
                   <h3 className="font-semibold text-foreground mb-2.5 text-lg">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
+                  <p className="text-base md:text-sm text-muted-foreground leading-relaxed">{step.description}</p>
                 </div>
               </div>
             </motion.div>

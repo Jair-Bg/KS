@@ -33,7 +33,7 @@ export function Footer() {
             >
               Kastia
             </span>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+            <p className="text-base md:text-sm text-muted-foreground leading-relaxed max-w-xs">
               Prediction markets embedded into the fabric of online conversation.
             </p>
           </div>
@@ -41,13 +41,13 @@ export function Footer() {
           {/* Link columns */}
           {Object.entries(footerLinks).map(([title, links]) => (
             <div key={title}>
-              <h4 className="text-sm font-semibold text-foreground mb-4">{title}</h4>
+              <h3 className="text-base font-semibold text-foreground mb-4">{title}</h3>
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link.label}>
                     <Link
                       to={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
+                      className="inline-flex items-center min-h-11 text-base md:text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
                     >
                       {link.label}
                     </Link>

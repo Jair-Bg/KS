@@ -108,16 +108,16 @@ function DemoMarketCard({ market, isSelected, onSelect }: { market: DemoMarket; 
     >
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold tracking-widest uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+          <span className="text-xs font-bold tracking-widest uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full">
             {market.category}
           </span>
           {market.trending && (
-            <span className="text-[10px] font-bold tracking-widest uppercase text-warning bg-warning/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+            <span className="text-xs font-bold tracking-widest uppercase text-warning bg-warning/10 px-2 py-0.5 rounded-full flex items-center gap-1">
               <TrendingUp className="w-2.5 h-2.5" /> Hot
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <Clock className="w-3 h-3" />
           {market.endDate}
         </div>
@@ -129,7 +129,7 @@ function DemoMarketCard({ market, isSelected, onSelect }: { market: DemoMarket; 
 
       {/* Odds bar visualization */}
       <div className="mb-4">
-        <div className="flex justify-between text-xs font-medium mb-1.5">
+        <div className="flex justify-between text-sm font-medium mb-1.5">
           <span className="text-success">Yes {odds.yes.toFixed(1)}%</span>
           <span className="text-destructive">No {odds.no.toFixed(1)}%</span>
         </div>
@@ -152,7 +152,7 @@ function DemoMarketCard({ market, isSelected, onSelect }: { market: DemoMarket; 
         <Button
           variant={pick === "yes" ? "oddsActive" : "odds"}
           size="pill"
-          className={`flex-1 h-10 text-sm font-semibold transition-all duration-200 ${pick === "yes" ? "ring-2 ring-primary/30 shadow-md shadow-primary/10" : ""}`}
+          className={`flex-1 min-h-11 h-11 text-base font-semibold transition-all duration-200 ${pick === "yes" ? "ring-2 ring-primary/30 shadow-md shadow-primary/10" : ""}`}
           onClick={(e) => { e.stopPropagation(); handlePick("yes"); }}
         >
           Yes {odds.yes.toFixed(0)}¢
@@ -160,7 +160,7 @@ function DemoMarketCard({ market, isSelected, onSelect }: { market: DemoMarket; 
         <Button
           variant={pick === "no" ? "oddsActive" : "odds"}
           size="pill"
-          className={`flex-1 h-10 text-sm font-semibold transition-all duration-200 ${pick === "no" ? "ring-2 ring-primary/30 shadow-md shadow-primary/10" : ""}`}
+          className={`flex-1 min-h-11 h-11 text-base font-semibold transition-all duration-200 ${pick === "no" ? "ring-2 ring-primary/30 shadow-md shadow-primary/10" : ""}`}
           onClick={(e) => { e.stopPropagation(); handlePick("no"); }}
         >
           No {odds.no.toFixed(0)}¢
@@ -189,13 +189,13 @@ function DemoMarketCard({ market, isSelected, onSelect }: { market: DemoMarket; 
               </div>
               <Button
                 variant="signup"
-                className="w-full rounded-xl h-10 text-sm font-semibold"
+                className="w-full rounded-xl min-h-11 h-11 text-base font-semibold"
                 onClick={(e) => { e.stopPropagation(); handleConfirm(); }}
               >
                 <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                 Place Demo Trade
               </Button>
-              <p className="text-[10px] text-center text-muted-foreground">
+              <p className="text-xs text-center text-muted-foreground">
                 This is a demo — sign up to trade with real money
               </p>
             </div>
@@ -209,7 +209,7 @@ function DemoMarketCard({ market, isSelected, onSelect }: { market: DemoMarket; 
             className="bg-success/10 border border-success/20 rounded-xl p-4 text-center"
           >
             <p className="text-sm font-semibold text-success">🎉 Demo trade placed!</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Sign up to trade for real and earn payouts
             </p>
           </motion.div>
@@ -217,7 +217,7 @@ function DemoMarketCard({ market, isSelected, onSelect }: { market: DemoMarket; 
       </AnimatePresence>
 
       {/* Meta stats */}
-      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border text-xs text-muted-foreground">
+      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border text-sm text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <BarChart3 className="w-3 h-3" /> {market.volume} vol
         </span>
@@ -277,7 +277,7 @@ export function LiveDemo() {
             <button
               key={cat}
               onClick={() => setFilter(cat)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+              className={`px-4 min-h-11 inline-flex items-center rounded-full text-base md:text-sm font-medium transition-all duration-200 ${
                 filter === cat
                   ? "bg-foreground text-background"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary"
@@ -317,7 +317,7 @@ export function LiveDemo() {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="text-center mt-14 space-y-4"
         >
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-base">
             Like what you see? Create your own markets and start earning.
           </p>
           <Link to="/auth">
