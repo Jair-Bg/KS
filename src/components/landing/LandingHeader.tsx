@@ -45,7 +45,7 @@ export function LandingHeader() {
                 <button
                   key={link.href}
                   onClick={() => handleNav(link.href)}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  className="inline-flex items-center min-h-11 px-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
                 >
                   {link.label}
                 </button>
@@ -74,7 +74,9 @@ export function LandingHeader() {
                 <ArrowRight className="w-3.5 h-3.5 ml-1" />
               </Button>
               <button
-                className="md:hidden p-2 text-foreground"
+                className="md:hidden inline-flex items-center justify-center min-h-11 min-w-11 rounded-lg text-foreground hover:bg-secondary transition-colors"
+                aria-label={mobileOpen ? "Close menu" : "Open menu"}
+                aria-expanded={mobileOpen}
                 onClick={() => setMobileOpen(!mobileOpen)}
               >
                 {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -99,16 +101,16 @@ export function LandingHeader() {
                 <button
                   key={link.href}
                   onClick={() => handleNav(link.href)}
-                  className="text-left text-sm font-medium text-muted-foreground hover:text-foreground py-2"
+                  className="text-left min-h-11 flex items-center text-base font-medium text-muted-foreground hover:text-foreground py-2"
                 >
                   {link.label}
                 </button>
               ))}
               <div className="flex gap-2 pt-2">
-                <Button variant="ghost" size="sm" onClick={() => { setMobileOpen(false); navigate("/auth"); }}>
+                <Button variant="ghost" size="sm" className="min-h-11 text-base" onClick={() => { setMobileOpen(false); navigate("/auth"); }}>
                   Log in
                 </Button>
-                <Button variant="signup" size="sm" className="rounded-full" onClick={() => { setMobileOpen(false); navigate("/auth"); }}>
+                <Button variant="signup" size="sm" className="rounded-full min-h-11 text-base" onClick={() => { setMobileOpen(false); navigate("/auth"); }}>
                   Get Started
                 </Button>
               </div>

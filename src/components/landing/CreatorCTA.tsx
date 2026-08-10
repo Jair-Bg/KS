@@ -50,7 +50,7 @@ export function CreatorCTA() {
                   </Button>
                 </Link>
               </div>
-              <p className="text-xs text-muted-foreground pt-2">
+              <p className="text-sm text-muted-foreground pt-2">
                 Free to start · No credit card · Earn from day one
               </p>
             </div>
