@@ -17,8 +17,8 @@ export function CreatorCTA() {
           {/* Card with layered backgrounds */}
           <div className="relative p-14 md:p-20">
             {/* Multi-layer background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-card to-primary/5 border border-primary/15 rounded-3xl" />
-            <div className="absolute inset-0 rounded-3xl"
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-card to-primary/5 dark:from-card dark:via-card dark:to-card border border-primary/15 dark:border-border rounded-3xl" />
+            <div className="absolute inset-0 rounded-3xl dark:hidden"
               style={{ background: "radial-gradient(ellipse at 50% 0%, hsl(var(--primary) / 0.12), transparent 60%)" }}
             />
             {/* Dot pattern inside CTA */}

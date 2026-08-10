@@ -9,7 +9,7 @@ export function HeroSection() {
       {/* Premium background */}
       <div className="absolute inset-0 pointer-events-none">
         {/* Radial gradient glow */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[600px] rounded-full opacity-30"
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[600px] rounded-full opacity-30 dark:hidden"
           style={{ background: "radial-gradient(ellipse, hsl(var(--primary) / 0.3), transparent 70%)" }}
         />
         {/* Subtle noise texture overlay */}
