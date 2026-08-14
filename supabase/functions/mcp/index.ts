@@ -112,7 +112,7 @@ var list_markets_default = defineTool({
       return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
     }
     const supabase = supabaseForUser(ctx);
-    let query = supabase.from("markets").select("id,question,category,status,yes_odds,no_odds,volume,end_date,engine").eq("status", "active").order("volume", { ascending: false }).limit(limit ?? 20);
+    let query = supabase.from("markets").select("id,question,category,status,yes_odds,no_odds,volume,end_date,engine").eq("status", "active").gt("end_date", (/* @__PURE__ */ new Date()).toISOString()).order("volume", { ascending: false }).limit(limit ?? 20);
     if (category) query = query.eq("category", category);
     if (search) query = query.ilike("question", `%${search}%`);
     const { data, error } = await query;
