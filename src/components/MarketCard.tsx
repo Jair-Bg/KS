@@ -4,6 +4,8 @@ import { Bookmark } from "lucide-react";
 import { Button } from "./ui/button";
 import { BetModal } from "./BetModal";
 import { useWatchlist } from "@/hooks/useWatchlist";
+import { MarketStatusBadge } from "./MarketStatusBadge";
+import { getMarketState } from "@/lib/marketStatus";
 
 interface MarketOption {
   name: string;
@@ -19,16 +21,24 @@ interface MarketCardProps {
   options: MarketOption[];
   volume?: string;
   marketsCount?: number;
+  status?: string | null;
+  resolution?: string | null;
+  endDate?: string | null;
 }
 
-export function MarketCard({ id, title, subtitle, options, volume, marketsCount }: MarketCardProps) {
+export function MarketCard({ id, title, subtitle, options, volume, marketsCount, status, resolution, endDate }: MarketCardProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [betModal, setBetModal] = useState<{ option: MarketOption } | null>(null);
   const navigate = useNavigate();
   const { isWatching, toggle } = useWatchlist();
   const watching = id ? isWatching(id) : false;
+  const stateInfo = getMarketState({ status, resolution, end_date: endDate });
   const handleOddsClick = (e: React.MouseEvent, index: number, option: MarketOption) => {
     e.stopPropagation();
+    if (!stateInfo.tradable) {
+      if (id) navigate(`/market/${id}`);
+      return;
+    }
     if (selectedIndex === index) {
       setSelectedIndex(null);
     } else {
@@ -43,7 +53,8 @@ export function MarketCard({ id, title, subtitle, options, volume, marketsCount 
 
   return (
     <>
-      <div className="market-card animate-fade-in cursor-pointer" onClick={handleCardClick}>
+      <div className={`market-card animate-fade-in cursor-pointer ${!stateInfo.tradable ? "opacity-80" : ""}`} onClick={handleCardClick}>
+
         <div className="flex items-start justify-between mb-4 gap-3">
           <div className="min-w-0">
             <h3 className="font-semibold text-foreground leading-tight">{title}</h3>
