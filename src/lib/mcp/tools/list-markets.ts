@@ -23,6 +23,7 @@ export default defineTool({
       .from("markets")
       .select("id,question,category,status,yes_odds,no_odds,volume,end_date,engine")
       .eq("status", "active")
+      .gt("end_date", new Date().toISOString())
       .order("volume", { ascending: false })
       .limit(limit ?? 20);
     if (category) query = query.eq("category", category);

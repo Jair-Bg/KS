@@ -158,6 +158,8 @@ export async function fetchMarkets(category?: string, search?: string): Promise<
     .from("markets")
     .select("*")
     .eq("status", "active")
+    // Markets past their deadline are closed — never list or search them
+    .gt("end_date", new Date().toISOString())
     .order("volume", { ascending: false })
     .limit(50);
   if (category && category !== "trending") q = q.eq("category", category);
