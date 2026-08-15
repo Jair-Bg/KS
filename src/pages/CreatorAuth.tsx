@@ -83,7 +83,7 @@ export default function CreatorAuth() {
       // Persist intent so post-OAuth callback can assign creator role
       sessionStorage.setItem("pending_account_type", "creator");
       const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: `${window.location.origin}/creator-dashboard`,
+        redirect_uri: `${window.location.origin}/auth/creator`,
       });
       if (result.error) {
         toast({ title: "Error", description: result.error.message || "Sign in failed", variant: "destructive" });
