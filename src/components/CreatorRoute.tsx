@@ -1,16 +1,35 @@
-import { Navigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { claimCreatorRole } from "@/lib/api";
 
 export function CreatorRoute({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
-  const { isCreator, loading: roleLoading } = useUserRole();
+  const { isCreator, loading: roleLoading, refresh } = useUserRole();
   const location = useLocation();
+  const [activating, setActivating] = useState(false);
+  const [attempted, setAttempted] = useState(false);
 
-  if (authLoading || roleLoading) {
+  // If the user just went through the creator signup flow (e.g. returning
+  // from an OAuth redirect), finish activating the creator account here.
+  useEffect(() => {
+    if (authLoading || roleLoading || !user || isCreator || attempted) return;
+    if (sessionStorage.getItem("pending_account_type") !== "creator") return;
+    setAttempted(true);
+    setActivating(true);
+    claimCreatorRole()
+      .catch((e) => console.error("Failed to activate creator account:", e))
+      .finally(() => {
+        sessionStorage.removeItem("pending_account_type");
+        setActivating(false);
+        refresh();
+      });
+  }, [authLoading, roleLoading, user, isCreator, attempted, refresh]);
+
+  if (authLoading || roleLoading || activating) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -41,3 +60,4 @@ export function CreatorRoute({ children }: { children: React.ReactNode }) {
   }
   return <>{children}</>;
 }
+

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -8,6 +8,9 @@ export function useUserRole() {
   const { user, loading: authLoading } = useAuth();
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [nonce, setNonce] = useState(0);
+
+  const refresh = useCallback(() => setNonce((n) => n + 1), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,12 +33,14 @@ export function useUserRole() {
     return () => {
       cancelled = true;
     };
-  }, [user, authLoading]);
+  }, [user, authLoading, nonce]);
 
   return {
     roles,
     loading: loading || authLoading,
+    refresh,
     isCreator: roles.includes("creator") || roles.includes("admin"),
     isAdmin: roles.includes("admin"),
   };
 }
+

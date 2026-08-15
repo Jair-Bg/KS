@@ -364,6 +364,13 @@ export async function fetchCreatorStats(): Promise<CreatorStats> {
   };
 }
 
+/** Grants the signed-in user the `creator` role (idempotent). */
+export async function claimCreatorRole(): Promise<{ granted: boolean; already_creator: boolean }> {
+  const { data, error } = await supabase.rpc("claim_creator_role");
+  if (error) throw error;
+  return (data ?? { granted: false, already_creator: false }) as { granted: boolean; already_creator: boolean };
+}
+
 
 export async function fetchCreatorAnalytics(days: number = 30): Promise<CreatorAnalytics> {
   const { data, error } = await supabase.rpc("get_creator_analytics", { p_days: days });
