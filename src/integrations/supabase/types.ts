@@ -643,6 +643,7 @@ export type Database = {
       }
       auto_resolve_expired_markets: { Args: never; Returns: number }
       cancel_order: { Args: { p_order_id: string }; Returns: Json }
+      claim_creator_role: { Args: never; Returns: Json }
       get_creator_analytics: { Args: { p_days?: number }; Returns: Json }
       has_role: {
         Args: {
