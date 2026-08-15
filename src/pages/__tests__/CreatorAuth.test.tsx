@@ -62,7 +62,7 @@ describe("/auth/creator (creator signup flow)", () => {
     expect(payload.email).toBe("casey@example.com");
     expect(payload.options.data.account_type).toBe("creator");
     expect(payload.options.data.display_name).toBe("Casey Creator");
-    expect(payload.options.emailRedirectTo).toMatch(/\/creator-dashboard$/);
+    expect(payload.options.emailRedirectTo).toMatch(/\/auth\/creator$/);
 
     await waitFor(() => expect(navigateMock).toHaveBeenCalledWith("/creator-dashboard"));
   });
