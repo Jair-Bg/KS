@@ -20,8 +20,24 @@ export default function CreatorAuth() {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
 
+  // Once a session exists (email signup or OAuth return), make sure the
+  // creator role is actually granted before entering the dashboard.
   useEffect(() => {
-    if (!authLoading && user) navigate("/creator-dashboard", { replace: true });
+    if (authLoading || !user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await claimCreatorRole();
+      } catch (e) {
+        console.error("Failed to activate creator account:", e);
+      } finally {
+        sessionStorage.removeItem("pending_account_type");
+        if (!cancelled) navigate("/creator-dashboard", { replace: true });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user, authLoading, navigate]);
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -33,11 +49,13 @@ export default function CreatorAuth() {
         password,
         options: {
           data: { full_name: displayName, display_name: displayName, account_type: "creator" },
-          emailRedirectTo: `${window.location.origin}/creator-dashboard`,
+          emailRedirectTo: `${window.location.origin}/auth/creator`,
         },
       });
       if (error) throw error;
       if (data.session) {
+        await claimCreatorRole().catch(() => undefined);
+        sessionStorage.removeItem("pending_account_type");
         toast({
           title: "Welcome, creator!",
           description: "Your creator account is ready. Launch your first market.",
@@ -55,6 +73,7 @@ export default function CreatorAuth() {
       setLoading(false);
     }
   };
+
 
   const handleSocialSignup = async (provider: "google" | "apple") => {
     setSocialLoading(provider);
