@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { CreatorLayout } from "@/components/creator/CreatorLayout";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
