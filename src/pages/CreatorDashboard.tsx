@@ -615,6 +615,9 @@ export default function CreatorDashboard() {
           </div>
         </section>
 
+        <CreatorActivityFeed markets={markets} loading={loading} />
+
+
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           <div className="px-6 py-4 border-b border-border">
             <h2 className="font-semibold text-foreground">Your Markets</h2>
