@@ -29,7 +29,10 @@ export interface CreatorActivityFeedProps {
 }
 
 export function CreatorActivityFeed({ markets, loading }: CreatorActivityFeedProps) {
-  const events = useMemo(() => {
+  const [filter, setFilter] = useState<EventFilter>("all");
+  const [sortKey, setSortKey] = useState<SortKey>("newest");
+
+  const allEvents = useMemo(() => {
     return markets
       .map((m) => ({ market: m, info: getMarketState(m) }))
       .filter((e) => e.info.state !== "active")
@@ -45,14 +48,24 @@ export function CreatorActivityFeed({ markets, loading }: CreatorActivityFeedPro
       .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
   }, [markets]);
 
+  const events = useMemo(() => {
+    const filtered =
+      filter === "all" ? allEvents : allEvents.filter((e) => e.info.state === filter);
+    if (sortKey === "newest") {
+      return [...filtered].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+    }
+    // highest impact = greatest earnings (volume × fee rate)
+    return [...filtered].sort((a, b) => b.earnings - a.earnings);
+  }, [allEvents, filter, sortKey]);
+
   const totals = useMemo(
     () => ({
-      volume: events.reduce((s, e) => s + e.volume, 0),
-      earnings: events.reduce((s, e) => s + e.earnings, 0),
-      settled: events.filter((e) => e.info.state === "settled").length,
-      awaiting: events.filter((e) => e.info.state === "expired").length,
+      volume: allEvents.reduce((s, e) => s + e.volume, 0),
+      earnings: allEvents.reduce((s, e) => s + e.earnings, 0),
+      settled: allEvents.filter((e) => e.info.state === "settled").length,
+      awaiting: allEvents.filter((e) => e.info.state === "expired").length,
     }),
-    [events]
+    [allEvents]
   );
 
   return (
