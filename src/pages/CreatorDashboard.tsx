@@ -662,8 +662,7 @@ export default function CreatorDashboard() {
             </div>
           )}
         </div>
-      </main>
-      <Footer />
-    </div>
+    </CreatorLayout>
+
   );
 }
