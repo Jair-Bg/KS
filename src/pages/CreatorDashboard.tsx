@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { Link } from "react-router-dom";
+import { CreatorLayout } from "@/components/creator/CreatorLayout";
+import { CreatorActivityFeed } from "@/components/CreatorActivityFeed";
 import { DollarSign, Eye, BarChart3, TrendingUp, Copy, ExternalLink, Check, Loader2, Users, Activity, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
 import {
   fetchCreatorStats,
   fetchCreatorMarkets,
