@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { ChevronDown, LogOut, History, User, Settings, BarChart3 } from "lucide-react";
+import { ChevronDown, LogOut, History, User, Settings, BarChart3, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export function WalletButton() {
   const { user, loading, signOut } = useAuth();
+  const { isCreator, isAdmin } = useUserRole();
+
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -69,32 +72,59 @@ export function WalletButton() {
                 <History className="w-4 h-4" />
                 My Dashboard
               </button>
+
+              {isCreator ? (
+                <>
+                  <div className="my-1 border-t border-border" />
+                  <div className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Creator workspace
+                  </div>
+                  <button
+                    onClick={() => { navigate("/creator-dashboard"); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    Creator Dashboard
+                  </button>
+                  <button
+                    onClick={() => { navigate("/create"); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+                  >
+                    <User className="w-4 h-4" />
+                    New Market
+                  </button>
+                  <button
+                    onClick={() => { navigate("/embeds"); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Embed Toolkit
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => { navigate("/auth/creator"); setMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  Become a creator
+                </button>
+              )}
+
+              {isAdmin && (
+                <>
+                  <div className="my-1 border-t border-border" />
+                  <button
+                    onClick={() => { navigate("/admin"); setMenuOpen(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
+                  >
+                    <Shield className="w-4 h-4" />
+                    Admin
+                  </button>
+                </>
+              )}
               <div className="my-1 border-t border-border" />
-              <div className="px-4 pt-2 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-                Creator
-              </div>
-              <button
-                onClick={() => { navigate("/creator-dashboard"); setMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
-              >
-                <BarChart3 className="w-4 h-4" />
-                Creator Dashboard
-              </button>
-              <button
-                onClick={() => { navigate("/create"); setMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
-              >
-                <User className="w-4 h-4" />
-                New Market
-              </button>
-              <button
-                onClick={() => { navigate("/embeds"); setMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-secondary transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-                Embed Toolkit
-              </button>
-              <div className="my-1 border-t border-border" />
+
               <button
                 onClick={async () => { await signOut(); setMenuOpen(false); navigate("/"); }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-destructive hover:bg-secondary transition-colors"

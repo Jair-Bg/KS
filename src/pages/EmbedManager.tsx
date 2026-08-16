@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { CreatorLayout } from "@/components/creator/CreatorLayout";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -82,21 +82,13 @@ export default function EmbedManager() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container py-12">
+    <CreatorLayout
+      title="Embed Toolkit"
+      description="Generate embeddable widgets for any platform — YouTube live, Twitch, blogs or newsletters. Your audience bets without leaving the content."
+    >
+      <div>
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <span className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-3">
-              Embed Toolkit
-            </span>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-              Put Predictions Everywhere
-            </h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Generate embeddable widgets for any platform. Your audience bets without leaving the content — YouTube live, Twitch streams, blogs, or newsletters.
-            </p>
-          </div>
+
 
           {/* Platform examples */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
@@ -317,8 +309,8 @@ export default function EmbedManager() {
             </div>
           </div>
         </div>
-      </main>
-      <Footer />
-    </div>
+      </div>
+    </CreatorLayout>
+
   );
 }
