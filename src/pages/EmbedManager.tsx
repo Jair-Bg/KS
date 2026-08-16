@@ -309,8 +309,8 @@ export default function EmbedManager() {
             </div>
           </div>
         </div>
-      </main>
-      <Footer />
-    </div>
+      </div>
+    </CreatorLayout>
+
   );
 }
