@@ -334,34 +334,30 @@ export default function CreatorDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container py-8 flex items-center justify-center min-h-[60vh]">
+      <CreatorLayout title="Creator Dashboard" description="Track your markets, earnings, and embed performance.">
+        <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </main>
-        <Footer />
-      </div>
+        </div>
+      </CreatorLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Creator Dashboard</h1>
-            <p className="text-muted-foreground text-sm mt-1">Track your markets, earnings, and embed performance.</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="pill" asChild>
-              <a href="/embeds">Embed Toolkit</a>
-            </Button>
-            <Button variant="signup" size="pill" asChild>
-              <a href="/create">+ New Market</a>
-            </Button>
-          </div>
-        </div>
+    <CreatorLayout
+      title="Creator Dashboard"
+      description="Track your markets, earnings, and embed performance."
+      actions={
+        <>
+          <Button variant="outline" size="pill" asChild>
+            <Link to="/embeds">Embed Toolkit</Link>
+          </Button>
+          <Button variant="signup" size="pill" asChild>
+            <Link to="/create">+ New Market</Link>
+          </Button>
+        </>
+      }
+    >
+
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {statItems.map((stat) => (
