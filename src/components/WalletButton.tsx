@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { ChevronDown, LogOut, History, User, Settings, BarChart3 } from "lucide-react";
+import { ChevronDown, LogOut, History, User, Settings, BarChart3, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export function WalletButton() {
   const { user, loading, signOut } = useAuth();
+  const { isCreator, isAdmin } = useUserRole();
+
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 

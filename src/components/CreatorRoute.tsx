@@ -37,8 +37,11 @@ export function CreatorRoute({ children }: { children: React.ReactNode }) {
     );
   }
   if (!user) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    // Creator surfaces are sign-in only, and they sign in through the
+    // dedicated creator entry point — never the trader auth page.
+    return <Navigate to="/auth/creator" state={{ from: location }} replace />;
   }
+
   if (!isCreator) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
