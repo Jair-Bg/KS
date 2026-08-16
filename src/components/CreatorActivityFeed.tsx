@@ -1,12 +1,15 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { CheckCircle2, Clock, TrendingUp, Users, Eye } from "lucide-react";
+import { CheckCircle2, Clock, TrendingUp, Users, Eye, ArrowUpDown, CheckCircle2 as CheckIcon } from "lucide-react";
 import { formatVolume, type Market } from "@/lib/api";
 import { getMarketState } from "@/lib/marketStatus";
 import { MarketStatusBadge } from "@/components/MarketStatusBadge";
 
 /** Creator fee share applied to settled/expired market volume. */
 const CREATOR_FEE_RATE = 0.05;
+
+type EventFilter = "all" | "settled" | "expired";
+type SortKey = "newest" | "impact";
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
