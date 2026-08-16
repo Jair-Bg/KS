@@ -97,11 +97,64 @@ export function CreatorActivityFeed({ markets, loading }: CreatorActivityFeedPro
         </div>
       </div>
 
+      {/* Filter + sort controls */}
+      <div className="px-6 py-3 border-b border-border flex items-center justify-between gap-3 flex-wrap bg-secondary/30">
+        <div className="inline-flex rounded-lg border border-border p-0.5 bg-card">
+          {([
+            { id: "all" as const, label: `All (${allEvents.length})` },
+            { id: "settled" as const, label: `Settled (${totals.settled})` },
+            { id: "expired" as const, label: `Expired (${totals.awaiting})` },
+          ]).map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setFilter(opt.id)}
+              className={
+                "px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors min-h-[36px] " +
+                (filter === opt.id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary")
+              }
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="inline-flex items-center gap-2">
+          <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground" />
+          <div className="inline-flex rounded-lg border border-border p-0.5 bg-card">
+            {([
+              { id: "newest" as const, label: "Newest" },
+              { id: "impact" as const, label: "Highest impact" },
+            ]).map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setSortKey(opt.id)}
+                className={
+                  "px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors min-h-[36px] " +
+                  (sortKey === opt.id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary")
+                }
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {loading ? (
         <div className="px-6 py-10 text-center text-sm text-muted-foreground">Loading activity…</div>
       ) : events.length === 0 ? (
         <div className="px-6 py-10 text-center text-sm text-muted-foreground">
-          No markets have expired or settled yet. Activity will appear here after a deadline passes.
+          {filter === "all"
+            ? "No markets have expired or settled yet. Activity will appear here after a deadline passes."
+            : filter === "settled"
+            ? "No settled markets yet. Settled events will appear here after automatic resolution runs."
+            : "No expired markets awaiting settlement right now."}
         </div>
       ) : (
         <ul className="divide-y divide-border">
