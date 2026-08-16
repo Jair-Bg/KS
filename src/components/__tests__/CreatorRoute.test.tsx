@@ -13,7 +13,7 @@ function renderRoute(initial = "/create") {
   return render(
     <MemoryRouter initialEntries={[initial]}>
       <Routes>
-        <Route path="/auth" element={<div>Auth Page</div>} />
+        <Route path="/auth/creator" element={<div>Creator Auth Page</div>} />
         <Route
           path="/create"
           element={
@@ -33,11 +33,12 @@ describe("CreatorRoute access control", () => {
     useUserRoleMock.mockReset();
   });
 
-  it("redirects unauthenticated users to /auth", () => {
+  it("redirects unauthenticated users to the creator sign-in page", () => {
     useAuthMock.mockReturnValue({ user: null, loading: false });
     useUserRoleMock.mockReturnValue({ isCreator: false, isAdmin: false, loading: false, roles: [] });
     renderRoute();
-    expect(screen.getByText("Auth Page")).toBeInTheDocument();
+    expect(screen.getByText("Creator Auth Page")).toBeInTheDocument();
+
     expect(screen.queryByText("Creator Only Content")).not.toBeInTheDocument();
   });
 
