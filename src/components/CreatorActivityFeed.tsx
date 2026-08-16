@@ -1,12 +1,15 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { CheckCircle2, Clock, TrendingUp, Users, Eye } from "lucide-react";
+import { CheckCircle2, Clock, TrendingUp, Users, Eye, ArrowUpDown, CheckCircle2 as CheckIcon } from "lucide-react";
 import { formatVolume, type Market } from "@/lib/api";
 import { getMarketState } from "@/lib/marketStatus";
 import { MarketStatusBadge } from "@/components/MarketStatusBadge";
 
 /** Creator fee share applied to settled/expired market volume. */
 const CREATOR_FEE_RATE = 0.05;
+
+type EventFilter = "all" | "settled" | "expired";
+type SortKey = "newest" | "impact";
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -26,7 +29,10 @@ export interface CreatorActivityFeedProps {
 }
 
 export function CreatorActivityFeed({ markets, loading }: CreatorActivityFeedProps) {
-  const events = useMemo(() => {
+  const [filter, setFilter] = useState<EventFilter>("all");
+  const [sortKey, setSortKey] = useState<SortKey>("newest");
+
+  const allEvents = useMemo(() => {
     return markets
       .map((m) => ({ market: m, info: getMarketState(m) }))
       .filter((e) => e.info.state !== "active")
@@ -42,14 +48,24 @@ export function CreatorActivityFeed({ markets, loading }: CreatorActivityFeedPro
       .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
   }, [markets]);
 
+  const events = useMemo(() => {
+    const filtered =
+      filter === "all" ? allEvents : allEvents.filter((e) => e.info.state === filter);
+    if (sortKey === "newest") {
+      return [...filtered].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+    }
+    // highest impact = greatest earnings (volume × fee rate)
+    return [...filtered].sort((a, b) => b.earnings - a.earnings);
+  }, [allEvents, filter, sortKey]);
+
   const totals = useMemo(
     () => ({
-      volume: events.reduce((s, e) => s + e.volume, 0),
-      earnings: events.reduce((s, e) => s + e.earnings, 0),
-      settled: events.filter((e) => e.info.state === "settled").length,
-      awaiting: events.filter((e) => e.info.state === "expired").length,
+      volume: allEvents.reduce((s, e) => s + e.volume, 0),
+      earnings: allEvents.reduce((s, e) => s + e.earnings, 0),
+      settled: allEvents.filter((e) => e.info.state === "settled").length,
+      awaiting: allEvents.filter((e) => e.info.state === "expired").length,
     }),
-    [events]
+    [allEvents]
   );
 
   return (
@@ -81,11 +97,64 @@ export function CreatorActivityFeed({ markets, loading }: CreatorActivityFeedPro
         </div>
       </div>
 
+      {/* Filter + sort controls */}
+      <div className="px-6 py-3 border-b border-border flex items-center justify-between gap-3 flex-wrap bg-secondary/30">
+        <div className="inline-flex rounded-lg border border-border p-0.5 bg-card">
+          {([
+            { id: "all" as const, label: `All (${allEvents.length})` },
+            { id: "settled" as const, label: `Settled (${totals.settled})` },
+            { id: "expired" as const, label: `Expired (${totals.awaiting})` },
+          ]).map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setFilter(opt.id)}
+              className={
+                "px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors min-h-[36px] " +
+                (filter === opt.id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary")
+              }
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="inline-flex items-center gap-2">
+          <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground" />
+          <div className="inline-flex rounded-lg border border-border p-0.5 bg-card">
+            {([
+              { id: "newest" as const, label: "Newest" },
+              { id: "impact" as const, label: "Highest impact" },
+            ]).map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setSortKey(opt.id)}
+                className={
+                  "px-3 py-1.5 rounded-[6px] text-xs font-medium transition-colors min-h-[36px] " +
+                  (sortKey === opt.id
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary")
+                }
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {loading ? (
         <div className="px-6 py-10 text-center text-sm text-muted-foreground">Loading activity…</div>
       ) : events.length === 0 ? (
         <div className="px-6 py-10 text-center text-sm text-muted-foreground">
-          No markets have expired or settled yet. Activity will appear here after a deadline passes.
+          {filter === "all"
+            ? "No markets have expired or settled yet. Activity will appear here after a deadline passes."
+            : filter === "settled"
+            ? "No settled markets yet. Settled events will appear here after automatic resolution runs."
+            : "No expired markets awaiting settlement right now."}
         </div>
       ) : (
         <ul className="divide-y divide-border">
