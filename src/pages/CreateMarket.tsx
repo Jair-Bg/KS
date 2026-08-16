@@ -394,8 +394,8 @@ export default function CreateMarket() {
             </div>
           )}
         </div>
-      </main>
-      <Footer />
-    </div>
+      </div>
+    </CreatorLayout>
+
   );
 }
