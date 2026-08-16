@@ -103,10 +103,10 @@ export default function CreateMarket() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container py-12">
+    <CreatorLayout title="New Market" description="Describe your question, refine the details, then publish and embed it.">
+      <div>
         <div className="max-w-2xl mx-auto">
+
           {/* Progress */}
           <div className="flex items-center gap-2 mb-12">
             {(["input", "refine", "embed"] as Step[]).map((s, i) => (
