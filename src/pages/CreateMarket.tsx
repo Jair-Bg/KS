@@ -230,8 +230,12 @@ export default function CreateMarket() {
                     <label className="text-sm font-medium text-foreground mb-1.5 block">Resolution date</label>
                     <Input
                       type="date"
+                      min={minEndDate()}
                       value={draft.end_date}
                       onChange={(e) => setDraft({ ...draft, end_date: e.target.value })}
+                      className="bg-secondary border-0 rounded-lg"
+                    />
+
                       className="bg-secondary border-0 rounded-lg"
                     />
                 </div>
