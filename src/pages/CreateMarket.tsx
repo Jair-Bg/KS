@@ -27,19 +27,32 @@ export default function CreateMarket() {
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
 
+  // Default resolution date: 30 days out (never a date in the past).
+  const defaultEndDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().slice(0, 10);
+  };
+  const minEndDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  };
+
   const handleGenerate = () => {
     const question = input.includes("?") ? input : `Will ${input}?`;
     const category = detectCategory(input);
     setDraft({
       question,
       market_type: "binary",
-      end_date: "2025-12-31",
+      end_date: defaultEndDate(),
       category,
       options: ["Option A", "Option B", "Option C"],
       engine: "amm",
     });
     setStep("refine");
   };
+
 
   const detectCategory = (text: string): string => {
     const lower = text.toLowerCase();
@@ -52,6 +65,11 @@ export default function CreateMarket() {
 
   const handlePublish = async () => {
     if (!draft) return;
+    const end = new Date(`${draft.end_date}T23:59:59`);
+    if (isNaN(end.getTime()) || end.getTime() <= Date.now()) {
+      setError("Pick a resolution date in the future — markets close on that date.");
+      return;
+    }
     setPublishing(true);
     setError("");
     try {
@@ -59,7 +77,8 @@ export default function CreateMarket() {
         question: draft.question,
         category: draft.category,
         market_type: draft.market_type,
-        end_date: new Date(draft.end_date).toISOString(),
+        end_date: end.toISOString(),
+
         options: draft.market_type === "multi" ? draft.options.filter((o) => o.trim()) : undefined,
         engine: draft.engine,
       });
@@ -211,6 +230,7 @@ export default function CreateMarket() {
                     <label className="text-sm font-medium text-foreground mb-1.5 block">Resolution date</label>
                     <Input
                       type="date"
+                      min={minEndDate()}
                       value={draft.end_date}
                       onChange={(e) => setDraft({ ...draft, end_date: e.target.value })}
                       className="bg-secondary border-0 rounded-lg"
