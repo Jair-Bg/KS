@@ -65,9 +65,14 @@ export default function CreateMarket() {
 
   const handlePublish = async () => {
     if (!draft) return;
+    const end = new Date(`${draft.end_date}T23:59:59`);
+    if (isNaN(end.getTime()) || end.getTime() <= Date.now()) {
+      setError("Pick a resolution date in the future — markets close on that date.");
+      return;
+    }
     setPublishing(true);
     setError("");
-    try {
+
       const market = await createMarket({
         question: draft.question,
         category: draft.category,
