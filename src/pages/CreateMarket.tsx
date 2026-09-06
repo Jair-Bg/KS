@@ -27,19 +27,32 @@ export default function CreateMarket() {
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
 
+  // Default resolution date: 30 days out (never a date in the past).
+  const defaultEndDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().slice(0, 10);
+  };
+  const minEndDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  };
+
   const handleGenerate = () => {
     const question = input.includes("?") ? input : `Will ${input}?`;
     const category = detectCategory(input);
     setDraft({
       question,
       market_type: "binary",
-      end_date: "2025-12-31",
+      end_date: defaultEndDate(),
       category,
       options: ["Option A", "Option B", "Option C"],
       engine: "amm",
     });
     setStep("refine");
   };
+
 
   const detectCategory = (text: string): string => {
     const lower = text.toLowerCase();
