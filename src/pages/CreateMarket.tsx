@@ -235,9 +235,6 @@ export default function CreateMarket() {
                       onChange={(e) => setDraft({ ...draft, end_date: e.target.value })}
                       className="bg-secondary border-0 rounded-lg"
                     />
-
-                      className="bg-secondary border-0 rounded-lg"
-                    />
                 </div>
 
                 <div>
