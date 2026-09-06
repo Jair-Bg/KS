@@ -72,12 +72,13 @@ export default function CreateMarket() {
     }
     setPublishing(true);
     setError("");
-
+    try {
       const market = await createMarket({
         question: draft.question,
         category: draft.category,
         market_type: draft.market_type,
-        end_date: new Date(draft.end_date).toISOString(),
+        end_date: end.toISOString(),
+
         options: draft.market_type === "multi" ? draft.options.filter((o) => o.trim()) : undefined,
         engine: draft.engine,
       });
